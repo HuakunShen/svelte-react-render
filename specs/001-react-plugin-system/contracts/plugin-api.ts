@@ -39,6 +39,7 @@ export interface ListViewItem {
 export interface ListViewProps {
   items: ListViewItem[];
   onItemSelect: (id: string) => void;
+  onItemRemove?: (id: string) => void;
   multiSelect?: boolean;
 }
 
