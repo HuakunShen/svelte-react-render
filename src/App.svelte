@@ -6,6 +6,7 @@
   import PluginContainer from './lib/PluginContainer.svelte'
   import { PluginRegistry } from './lib/plugin-system'
   import { todoPluginModule } from './plugins/todo-plugin'
+  import { settingsPluginModule } from './plugins/settings-plugin'
 
   let pluginRegistry: PluginRegistry
   let loadedPlugins: string[] = []
@@ -16,8 +17,9 @@
       // Initialize plugin system
       pluginRegistry = new PluginRegistry()
       
-      // Register the TODO plugin
+      // Register plugins
       pluginRegistry.registerPlugin(todoPluginModule)
+      pluginRegistry.registerPlugin(settingsPluginModule)
       
       // Get list of loaded plugins
       loadedPlugins = pluginRegistry.listPlugins().map(p => p.id)
@@ -83,10 +85,10 @@
 
   <div class="info-section">
     <p>
-      This demo shows React components (plugins) being rendered inside a Svelte application
-      using a custom React reconciler. The TODO list above is a React component that uses
-      custom UI elements (plugin-button, plugin-listview, plugin-input) which are rendered
-      as native Svelte components.
+      This demo shows React components (plugins) rendered inside a Svelte application
+      using a custom React reconciler. The TODO list uses plugin-button, plugin-listview,
+      and plugin-input; the Settings panel uses plugin-toggle, plugin-badge, and plugin-divider —
+      all mapped to native Svelte 5 components.
     </p>
     
     <p>

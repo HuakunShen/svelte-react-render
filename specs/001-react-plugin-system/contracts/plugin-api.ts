@@ -52,6 +52,23 @@ export interface InputProps {
   onSubmit?: () => void;
 }
 
+// Additional UI Component Contracts
+export interface ToggleProps {
+  checked: boolean;
+  label?: string;
+  disabled?: boolean;
+  onChange: (checked: boolean) => void;
+}
+
+export interface BadgeProps {
+  text: string;
+  variant?: 'neutral' | 'success' | 'warning' | 'danger';
+}
+
+export interface DividerProps {
+  spacing?: 'sm' | 'md' | 'lg';
+}
+
 // Plugin Registry Contracts
 export interface PluginRegistryAPI {
   loadPlugin(path: string): Promise<PluginModule>;

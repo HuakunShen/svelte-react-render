@@ -1,5 +1,5 @@
 import type { ComponentTypeMapping } from '../../../specs/001-react-plugin-system/contracts/reconciler-api'
-import type { ButtonProps, ListViewProps, InputProps } from '../../../specs/001-react-plugin-system/contracts/plugin-api'
+import type { ButtonProps, ListViewProps, InputProps, ToggleProps, BadgeProps, DividerProps } from '../../../specs/001-react-plugin-system/contracts/plugin-api'
 
 // Component type mapping implementation
 export const componentTypeMapping: ComponentTypeMapping = {
@@ -14,6 +14,18 @@ export const componentTypeMapping: ComponentTypeMapping = {
   'plugin-input': {
     props: {} as InputProps,
     svelteComponent: 'Input'
+  },
+  'plugin-toggle': {
+    props: {} as ToggleProps,
+    svelteComponent: 'Toggle'
+  },
+  'plugin-badge': {
+    props: {} as BadgeProps,
+    svelteComponent: 'Badge'
+  },
+  'plugin-divider': {
+    props: {} as DividerProps,
+    svelteComponent: 'Divider'
   }
 }
 
@@ -72,6 +84,34 @@ export function validateInputProps(props: any): props is InputProps {
   )
 }
 
+export function validateToggleProps(props: any): props is ToggleProps {
+  return (
+    typeof props === 'object' &&
+    props !== null &&
+    typeof props.checked === 'boolean' &&
+    typeof props.onChange === 'function' &&
+    (props.label === undefined || typeof props.label === 'string') &&
+    (props.disabled === undefined || typeof props.disabled === 'boolean')
+  )
+}
+
+export function validateBadgeProps(props: any): props is BadgeProps {
+  return (
+    typeof props === 'object' &&
+    props !== null &&
+    typeof props.text === 'string' &&
+    (props.variant === undefined || ['neutral', 'success', 'warning', 'danger'].includes(props.variant))
+  )
+}
+
+export function validateDividerProps(props: any): props is DividerProps {
+  return (
+    typeof props === 'object' &&
+    props !== null &&
+    (props.spacing === undefined || ['sm', 'md', 'lg'].includes(props.spacing))
+  )
+}
+
 // Main validation function
 export function validateComponentProps(type: string, props: any): boolean {
   switch (type) {
@@ -81,6 +121,12 @@ export function validateComponentProps(type: string, props: any): boolean {
       return validateListViewProps(props)
     case 'plugin-input':
       return validateInputProps(props)
+    case 'plugin-toggle':
+      return validateToggleProps(props)
+    case 'plugin-badge':
+      return validateBadgeProps(props)
+    case 'plugin-divider':
+      return validateDividerProps(props)
     default:
       return false
   }
@@ -113,6 +159,22 @@ export function transformPropsForSvelte(type: string, reactProps: any): any {
         disabled: reactProps.disabled || false,
         onChange: reactProps.onChange,
         onSubmit: reactProps.onSubmit
+      }
+    case 'plugin-toggle':
+      return {
+        checked: !!reactProps.checked,
+        label: reactProps.label || '',
+        disabled: !!reactProps.disabled,
+        onChange: reactProps.onChange
+      }
+    case 'plugin-badge':
+      return {
+        text: reactProps.text,
+        variant: reactProps.variant || 'neutral'
+      }
+    case 'plugin-divider':
+      return {
+        spacing: reactProps.spacing || 'md'
       }
     
     default:
@@ -169,6 +231,36 @@ export function getPropsValidationError(type: string, props: any): string | null
         }
         if (props.type && !['text', 'password', 'email'].includes(props.type)) {
           return 'Input "type" must be one of: text, password, email'
+        }
+        break
+
+      case 'plugin-toggle':
+        if (typeof props.checked !== 'boolean') {
+          return 'Toggle component requires boolean "checked" prop'
+        }
+        if (!props.onChange || typeof props.onChange !== 'function') {
+          return 'Toggle component requires a function "onChange" prop'
+        }
+        if (props.label && typeof props.label !== 'string') {
+          return 'Toggle "label" must be a string'
+        }
+        if (props.disabled !== undefined && typeof props.disabled !== 'boolean') {
+          return 'Toggle "disabled" must be a boolean'
+        }
+        break
+
+      case 'plugin-badge':
+        if (!props.text || typeof props.text !== 'string') {
+          return 'Badge component requires a string "text" prop'
+        }
+        if (props.variant && !['neutral', 'success', 'warning', 'danger'].includes(props.variant)) {
+          return 'Badge "variant" must be one of: neutral, success, warning, danger'
+        }
+        break
+
+      case 'plugin-divider':
+        if (props.spacing && !['sm', 'md', 'lg'].includes(props.spacing)) {
+          return 'Divider "spacing" must be one of: sm, md, lg'
         }
         break
     }

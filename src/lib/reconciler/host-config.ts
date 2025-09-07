@@ -4,6 +4,9 @@ import { UIComponent } from '../ui-components/ui-component'
 import Button from '../ui-components/Button.svelte'
 import ListView from '../ui-components/ListView.svelte'
 import Input from '../ui-components/Input.svelte'
+import Toggle from '../ui-components/Toggle.svelte'
+import Badge from '../ui-components/Badge.svelte'
+import Divider from '../ui-components/Divider.svelte'
 
 // Host context for passing theme/styling info
 export interface SvelteHostContext {
@@ -15,7 +18,10 @@ export interface SvelteHostContext {
 const componentMap = {
   'plugin-button': Button,
   'plugin-listview': ListView,
-  'plugin-input': Input
+  'plugin-input': Input,
+  'plugin-toggle': Toggle,
+  'plugin-badge': Badge,
+  'plugin-divider': Divider
 } as const
 
 export const hostConfig: HostConfig = {
@@ -55,7 +61,7 @@ export const hostConfig: HostConfig = {
     }
 
     // Extract component type from React element type
-    let componentType: 'button' | 'listview' | 'input'
+    let componentType: 'button' | 'listview' | 'input' | 'toggle' | 'badge' | 'divider'
     switch (type) {
       case 'plugin-button':
         componentType = 'button'
@@ -65,6 +71,15 @@ export const hostConfig: HostConfig = {
         break
       case 'plugin-input':
         componentType = 'input'
+        break
+      case 'plugin-toggle':
+        componentType = 'toggle'
+        break
+      case 'plugin-badge':
+        componentType = 'badge'
+        break
+      case 'plugin-divider':
+        componentType = 'divider'
         break
       default:
         throw new Error(`Unknown plugin component type: ${type}`)

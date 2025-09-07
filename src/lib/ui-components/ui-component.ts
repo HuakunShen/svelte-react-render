@@ -1,7 +1,7 @@
-import type { ButtonProps, ListViewProps, InputProps } from '../../../specs/001-react-plugin-system/contracts/plugin-api'
+import type { ButtonProps, ListViewProps, InputProps, ToggleProps, BadgeProps, DividerProps } from '../../../specs/001-react-plugin-system/contracts/plugin-api'
 
-export type UIComponentType = 'button' | 'listview' | 'input'
-export type UIComponentProps = ButtonProps | ListViewProps | InputProps
+export type UIComponentType = 'button' | 'listview' | 'input' | 'toggle' | 'badge' | 'divider'
+export type UIComponentProps = ButtonProps | ListViewProps | InputProps | ToggleProps | BadgeProps | DividerProps
 
 export interface UIComponentInstance {
   type: UIComponentType
@@ -23,7 +23,7 @@ export class UIComponent implements UIComponentInstance {
   }
 
   private validateType(type: UIComponentType): void {
-    const validTypes: UIComponentType[] = ['button', 'listview', 'input']
+    const validTypes: UIComponentType[] = ['button', 'listview', 'input', 'toggle', 'badge', 'divider']
     if (!validTypes.includes(type)) {
       throw new Error(`Invalid UI component type: ${type}. Valid types: ${validTypes.join(', ')}`)
     }
@@ -54,6 +54,15 @@ export class UIComponent implements UIComponentInstance {
       case 'input':
         this.validateInputProps(props as InputProps)
         break
+      case 'toggle':
+        this.validateToggleProps(props as ToggleProps)
+        break
+      case 'badge':
+        this.validateBadgeProps(props as BadgeProps)
+        break
+      case 'divider':
+        this.validateDividerProps(props as DividerProps)
+        break
     }
   }
 
@@ -72,6 +81,36 @@ export class UIComponent implements UIComponentInstance {
 
     if (props.disabled !== undefined && typeof props.disabled !== 'boolean') {
       throw new Error('Button "disabled" prop must be a boolean')
+    }
+  }
+
+  private validateToggleProps(props: ToggleProps): void {
+    if (typeof props.checked !== 'boolean') {
+      throw new Error('Toggle requires boolean "checked" prop')
+    }
+    if (typeof props.onChange !== 'function') {
+      throw new Error('Toggle requires function "onChange" prop')
+    }
+    if (props.label !== undefined && typeof props.label !== 'string') {
+      throw new Error('Toggle "label" must be a string')
+    }
+    if (props.disabled !== undefined && typeof props.disabled !== 'boolean') {
+      throw new Error('Toggle "disabled" must be a boolean')
+    }
+  }
+
+  private validateBadgeProps(props: BadgeProps): void {
+    if (!props.text || typeof props.text !== 'string') {
+      throw new Error('Badge requires string "text" prop')
+    }
+    if (props.variant && !['neutral', 'success', 'warning', 'danger'].includes(props.variant)) {
+      throw new Error('Badge "variant" must be one of: neutral, success, warning, danger')
+    }
+  }
+
+  private validateDividerProps(props: DividerProps): void {
+    if (props.spacing && !['sm', 'md', 'lg'].includes(props.spacing)) {
+      throw new Error('Divider "spacing" must be one of: sm, md, lg')
     }
   }
 

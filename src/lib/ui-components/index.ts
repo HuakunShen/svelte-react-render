@@ -2,6 +2,9 @@
 export { default as Button } from './Button.svelte'
 export { default as ListView } from './ListView.svelte'
 export { default as Input } from './Input.svelte'
+export { default as Toggle } from './Toggle.svelte'
+export { default as Badge } from './Badge.svelte'
+export { default as Divider } from './Divider.svelte'
 
 // Export UI component utilities
 export { 
@@ -9,6 +12,7 @@ export {
   createButtonComponent,
   createListViewComponent,
   createInputComponent,
+  
   type UIComponentType,
   type UIComponentProps,
   type UIComponentInstance
@@ -19,5 +23,8 @@ export type {
   ButtonProps,
   ListViewProps,
   InputProps,
-  ListViewItem
+  ListViewItem,
+  ToggleProps,
+  BadgeProps,
+  DividerProps
 } from '../../../specs/001-react-plugin-system/contracts/plugin-api'
