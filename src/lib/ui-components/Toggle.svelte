@@ -47,7 +47,7 @@
     type="checkbox"
     checked={checked}
     disabled={disabled}
-    on:change={handleChange}
+    onchange={handleChange}
   />
   <span class="slider" aria-hidden="true"></span>
   {#if label}

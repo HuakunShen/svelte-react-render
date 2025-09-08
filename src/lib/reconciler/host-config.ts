@@ -1,28 +1,15 @@
 import { mount } from 'svelte'
 import type { HostConfig } from '../../../specs/001-react-plugin-system/contracts/reconciler-api'
 import { UIComponent } from '../ui-components/ui-component'
-import Button from '../ui-components/Button.svelte'
-import ListView from '../ui-components/ListView.svelte'
-import Input from '../ui-components/Input.svelte'
-import Toggle from '../ui-components/Toggle.svelte'
-import Badge from '../ui-components/Badge.svelte'
-import Divider from '../ui-components/Divider.svelte'
+import { componentRegistry } from './component-registry'
+// Ensure built-in components are registered
+import './component-mapping'
 
 // Host context for passing theme/styling info
 export interface SvelteHostContext {
   theme: 'light' | 'dark'
   namespace?: string
 }
-
-// Type mapping for React elements to Svelte components
-const componentMap = {
-  'plugin-button': Button,
-  'plugin-listview': ListView,
-  'plugin-input': Input,
-  'plugin-toggle': Toggle,
-  'plugin-badge': Badge,
-  'plugin-divider': Divider
-} as const
 
 export const hostConfig: HostConfig = {
   supportsMutation: true,
@@ -56,37 +43,15 @@ export const hostConfig: HostConfig = {
     hostContext: SvelteHostContext,
     internalHandle: any
   ): UIComponent {
-    if (!componentMap.hasOwnProperty(type as keyof typeof componentMap)) {
-      throw new Error(`Unsupported React element type: ${type}`)
-    }
+    const reg = componentRegistry.get(type)
+    if (!reg) throw new Error(`Unsupported React element type: ${type}`)
 
     // Extract component type from React element type
-    let componentType: 'button' | 'listview' | 'input' | 'toggle' | 'badge' | 'divider'
-    switch (type) {
-      case 'plugin-button':
-        componentType = 'button'
-        break
-      case 'plugin-listview':
-        componentType = 'listview'
-        break
-      case 'plugin-input':
-        componentType = 'input'
-        break
-      case 'plugin-toggle':
-        componentType = 'toggle'
-        break
-      case 'plugin-badge':
-        componentType = 'badge'
-        break
-      case 'plugin-divider':
-        componentType = 'divider'
-        break
-      default:
-        throw new Error(`Unknown plugin component type: ${type}`)
-    }
+    const componentType = type // carry through the exact type string
 
     // Create UI component wrapper
-    const uiComponent = new UIComponent(componentType, props)
+    const transformed = componentRegistry.transformProps(type, props)
+    const uiComponent = new UIComponent(componentType, transformed)
 
     // Create DOM container for this component
     const container = document.createElement('div')
@@ -99,12 +64,12 @@ export const hostConfig: HostConfig = {
     }
 
     // Create and mount Svelte component
-    const SvelteComponentClass = componentMap[type as keyof typeof componentMap]
+    const SvelteComponentClass = reg.svelteComponent
     
     try {
       mount(SvelteComponentClass, {
         target: container,
-        props: props
+        props: transformed
       })
 
       uiComponent.setDomNode(container)

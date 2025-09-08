@@ -7,6 +7,7 @@
   import { PluginRegistry } from './lib/plugin-system'
   import { todoPluginModule } from './plugins/todo-plugin'
   import { settingsPluginModule } from './plugins/settings-plugin'
+  import { chipPluginModule } from './plugins/chip-plugin'
 
   let pluginRegistry: PluginRegistry
   let loadedPlugins: string[] = []
@@ -20,6 +21,7 @@
       // Register plugins
       pluginRegistry.registerPlugin(todoPluginModule)
       pluginRegistry.registerPlugin(settingsPluginModule)
+      pluginRegistry.registerPlugin(chipPluginModule)
       
       // Get list of loaded plugins
       loadedPlugins = pluginRegistry.listPlugins().map(p => p.id)
@@ -88,7 +90,8 @@
       This demo shows React components (plugins) rendered inside a Svelte application
       using a custom React reconciler. The TODO list uses plugin-button, plugin-listview,
       and plugin-input; the Settings panel uses plugin-toggle, plugin-badge, and plugin-divider —
-      all mapped to native Svelte 5 components.
+      all mapped to native Svelte 5 components. The Chip demo shows a user-registered
+      custom component rendered via <plugin-chip>.
     </p>
     
     <p>

@@ -6,6 +6,9 @@ export { default as ReconcilerFactoryDefault } from './reconciler-factory'
 export { default as hostConfig } from './host-config'
 export type { SvelteHostContext } from './host-config'
 
+// Export runtime component registry API
+export { componentRegistry, registerComponent } from './component-registry'
+
 // Export component mapping utilities
 export {
   componentTypeMapping,

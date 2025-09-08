@@ -1,7 +1,15 @@
 import type { ComponentTypeMapping } from '../../../specs/001-react-plugin-system/contracts/reconciler-api'
 import type { ButtonProps, ListViewProps, InputProps, ToggleProps, BadgeProps, DividerProps } from '../../../specs/001-react-plugin-system/contracts/plugin-api'
+import { componentRegistry, registerComponent } from './component-registry'
+import Button from '../ui-components/Button.svelte'
+import ListView from '../ui-components/ListView.svelte'
+import Input from '../ui-components/Input.svelte'
+import Toggle from '../ui-components/Toggle.svelte'
+import Badge from '../ui-components/Badge.svelte'
+import Divider from '../ui-components/Divider.svelte'
 
 // Component type mapping implementation
+// Maintain a typed map for built-ins (for docs/debug), but runtime uses registry
 export const componentTypeMapping: ComponentTypeMapping = {
   'plugin-button': {
     props: {} as ButtonProps,
@@ -31,15 +39,16 @@ export const componentTypeMapping: ComponentTypeMapping = {
 
 // Utility type guards
 export function isValidPluginComponentType(type: string): type is keyof ComponentTypeMapping {
-  return type in componentTypeMapping
+  return componentRegistry.has(type)
 }
 
 export function getComponentInfo(type: string) {
-  if (!isValidPluginComponentType(type)) {
-    return null
+  const reg = componentRegistry.get(type)
+  if (!reg) return null
+  return {
+    props: {},
+    svelteComponent: reg.displayName || 'Unknown'
   }
-  
-  return componentTypeMapping[type]
 }
 
 // Props validation helpers
@@ -83,6 +92,8 @@ export function validateInputProps(props: any): props is InputProps {
     (props.onSubmit === undefined || typeof props.onSubmit === 'function')
   )
 }
+
+// (definitions for validateToggleProps, validateBadgeProps, validateDividerProps appear below)
 
 export function validateToggleProps(props: any): props is ToggleProps {
   return (
@@ -128,66 +139,84 @@ export function validateComponentProps(type: string, props: any): boolean {
     case 'plugin-divider':
       return validateDividerProps(props)
     default:
-      return false
+      return componentRegistry.validateProps(type, props)
   }
 }
 
-// Props transformation helpers (if needed for different prop names between React and Svelte)
+// Built-in props transformation helpers (pure, non-recursive)
+function transformButtonProps(reactProps: any): ButtonProps {
+  return {
+    label: reactProps.label,
+    variant: reactProps.variant || 'primary',
+    disabled: reactProps.disabled || false,
+    onClick: reactProps.onClick
+  }
+}
+
+function transformListViewProps(reactProps: any): ListViewProps {
+  return {
+    items: reactProps.items || [],
+    onItemSelect: reactProps.onItemSelect,
+    multiSelect: reactProps.multiSelect || false,
+    onItemRemove: reactProps.onItemRemove
+  }
+}
+
+function transformInputProps(reactProps: any): InputProps {
+  return {
+    value: reactProps.value || '',
+    placeholder: reactProps.placeholder || '',
+    type: reactProps.type || 'text',
+    disabled: reactProps.disabled || false,
+    onChange: reactProps.onChange,
+    onSubmit: reactProps.onSubmit
+  }
+}
+
+function transformToggleProps(reactProps: any): ToggleProps {
+  return {
+    checked: !!reactProps.checked,
+    label: reactProps.label || '',
+    disabled: !!reactProps.disabled,
+    onChange: reactProps.onChange
+  }
+}
+
+function transformBadgeProps(reactProps: any): BadgeProps {
+  return {
+    text: reactProps.text,
+    variant: reactProps.variant || 'neutral'
+  }
+}
+
+function transformDividerProps(reactProps: any): DividerProps {
+  return {
+    spacing: reactProps.spacing || 'md'
+  }
+}
+
+// Public transform helper (uses built-ins, falls back to identity for custom)
 export function transformPropsForSvelte(type: string, reactProps: any): any {
-  // For now, props are 1:1 mapped, but this allows future customization
   switch (type) {
     case 'plugin-button':
-      return {
-        label: reactProps.label,
-        variant: reactProps.variant || 'primary',
-        disabled: reactProps.disabled || false,
-        onClick: reactProps.onClick
-      }
-    
+      return transformButtonProps(reactProps)
     case 'plugin-listview':
-      return {
-        items: reactProps.items || [],
-        onItemSelect: reactProps.onItemSelect,
-        multiSelect: reactProps.multiSelect || false
-      }
-    
+      return transformListViewProps(reactProps)
     case 'plugin-input':
-      return {
-        value: reactProps.value || '',
-        placeholder: reactProps.placeholder || '',
-        type: reactProps.type || 'text',
-        disabled: reactProps.disabled || false,
-        onChange: reactProps.onChange,
-        onSubmit: reactProps.onSubmit
-      }
+      return transformInputProps(reactProps)
     case 'plugin-toggle':
-      return {
-        checked: !!reactProps.checked,
-        label: reactProps.label || '',
-        disabled: !!reactProps.disabled,
-        onChange: reactProps.onChange
-      }
+      return transformToggleProps(reactProps)
     case 'plugin-badge':
-      return {
-        text: reactProps.text,
-        variant: reactProps.variant || 'neutral'
-      }
+      return transformBadgeProps(reactProps)
     case 'plugin-divider':
-      return {
-        spacing: reactProps.spacing || 'md'
-      }
-    
+      return transformDividerProps(reactProps)
     default:
-      return reactProps
+      return componentRegistry.transformProps(type, reactProps)
   }
 }
 
 // Error messages for invalid props
 export function getPropsValidationError(type: string, props: any): string | null {
-  if (!isValidPluginComponentType(type)) {
-    return `Unknown component type: ${type}`
-  }
-
   try {
     switch (type) {
       case 'plugin-button':
@@ -200,7 +229,7 @@ export function getPropsValidationError(type: string, props: any): string | null
         if (props.variant && !['primary', 'secondary', 'danger'].includes(props.variant)) {
           return 'Button "variant" must be one of: primary, secondary, danger'
         }
-        break
+        return null
 
       case 'plugin-listview':
         if (!Array.isArray(props.items)) {
@@ -209,8 +238,6 @@ export function getPropsValidationError(type: string, props: any): string | null
         if (!props.onItemSelect || typeof props.onItemSelect !== 'function') {
           return 'ListView component requires a function "onItemSelect" prop'
         }
-        
-        // Validate each item
         for (let i = 0; i < props.items.length; i++) {
           const item = props.items[i]
           if (!item.id || typeof item.id !== 'string') {
@@ -220,7 +247,7 @@ export function getPropsValidationError(type: string, props: any): string | null
             return `ListView item at index ${i} requires a string "content" property`
           }
         }
-        break
+        return null
 
       case 'plugin-input':
         if (typeof props.value !== 'string') {
@@ -232,7 +259,7 @@ export function getPropsValidationError(type: string, props: any): string | null
         if (props.type && !['text', 'password', 'email'].includes(props.type)) {
           return 'Input "type" must be one of: text, password, email'
         }
-        break
+        return null
 
       case 'plugin-toggle':
         if (typeof props.checked !== 'boolean') {
@@ -247,7 +274,7 @@ export function getPropsValidationError(type: string, props: any): string | null
         if (props.disabled !== undefined && typeof props.disabled !== 'boolean') {
           return 'Toggle "disabled" must be a boolean'
         }
-        break
+        return null
 
       case 'plugin-badge':
         if (!props.text || typeof props.text !== 'string') {
@@ -256,16 +283,17 @@ export function getPropsValidationError(type: string, props: any): string | null
         if (props.variant && !['neutral', 'success', 'warning', 'danger'].includes(props.variant)) {
           return 'Badge "variant" must be one of: neutral, success, warning, danger'
         }
-        break
+        return null
 
       case 'plugin-divider':
         if (props.spacing && !['sm', 'md', 'lg'].includes(props.spacing)) {
           return 'Divider "spacing" must be one of: sm, md, lg'
         }
-        break
-    }
+        return null
 
-    return null // Valid props
+      default:
+        return componentRegistry.getPropsError(type, props)
+    }
   } catch (error) {
     return `Props validation error: ${error instanceof Error ? error.message : 'Unknown error'}`
   }
@@ -284,3 +312,76 @@ export function getComponentDebugInfo(type: string, props: any) {
 }
 
 export default componentTypeMapping
+
+// Register built-in components into runtime registry
+registerComponent({
+  type: 'plugin-button',
+  svelteComponent: Button,
+  validateProps: validateButtonProps,
+  getPropsError: (p) => {
+    if (!validateButtonProps(p)) return getPropsValidationError('plugin-button', p)
+    return null
+  },
+  transformProps: transformButtonProps,
+  displayName: 'Button'
+})
+
+registerComponent({
+  type: 'plugin-listview',
+  svelteComponent: ListView,
+  validateProps: validateListViewProps,
+  getPropsError: (p) => {
+    if (!validateListViewProps(p)) return getPropsValidationError('plugin-listview', p)
+    return null
+  },
+  transformProps: transformListViewProps,
+  displayName: 'ListView'
+})
+
+registerComponent({
+  type: 'plugin-input',
+  svelteComponent: Input,
+  validateProps: validateInputProps,
+  getPropsError: (p) => {
+    if (!validateInputProps(p)) return getPropsValidationError('plugin-input', p)
+    return null
+  },
+  transformProps: transformInputProps,
+  displayName: 'Input'
+})
+
+registerComponent({
+  type: 'plugin-toggle',
+  svelteComponent: Toggle,
+  validateProps: validateToggleProps,
+  getPropsError: (p) => {
+    if (!validateToggleProps(p)) return getPropsValidationError('plugin-toggle', p)
+    return null
+  },
+  transformProps: transformToggleProps,
+  displayName: 'Toggle'
+})
+
+registerComponent({
+  type: 'plugin-badge',
+  svelteComponent: Badge,
+  validateProps: validateBadgeProps,
+  getPropsError: (p) => {
+    if (!validateBadgeProps(p)) return getPropsValidationError('plugin-badge', p)
+    return null
+  },
+  transformProps: transformBadgeProps,
+  displayName: 'Badge'
+})
+
+registerComponent({
+  type: 'plugin-divider',
+  svelteComponent: Divider,
+  validateProps: validateDividerProps,
+  getPropsError: (p) => {
+    if (!validateDividerProps(p)) return getPropsValidationError('plugin-divider', p)
+    return null
+  },
+  transformProps: transformDividerProps,
+  displayName: 'Divider'
+})

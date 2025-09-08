@@ -1,7 +1,8 @@
 import type { ButtonProps, ListViewProps, InputProps, ToggleProps, BadgeProps, DividerProps } from '../../../specs/001-react-plugin-system/contracts/plugin-api'
+import { componentRegistry } from '../reconciler/component-registry'
 
-export type UIComponentType = 'button' | 'listview' | 'input' | 'toggle' | 'badge' | 'divider'
-export type UIComponentProps = ButtonProps | ListViewProps | InputProps | ToggleProps | BadgeProps | DividerProps
+export type UIComponentType = string
+export type UIComponentProps = ButtonProps | ListViewProps | InputProps | ToggleProps | BadgeProps | DividerProps | Record<string, any>
 
 export interface UIComponentInstance {
   type: UIComponentType
@@ -23,9 +24,10 @@ export class UIComponent implements UIComponentInstance {
   }
 
   private validateType(type: UIComponentType): void {
-    const validTypes: UIComponentType[] = ['button', 'listview', 'input', 'toggle', 'badge', 'divider']
-    if (!validTypes.includes(type)) {
-      throw new Error(`Invalid UI component type: ${type}. Valid types: ${validTypes.join(', ')}`)
+    // Dynamic: component types are validated via registry presence
+    if (!componentRegistry.has(type)) {
+      // Allow creation first; host-config ensures registration for built-ins.
+      // Throwing here could break dynamic registration order.
     }
   }
 
@@ -44,25 +46,10 @@ export class UIComponent implements UIComponentInstance {
   }
 
   private validateProps(type: UIComponentType, props: Record<string, any>): void {
-    switch (type) {
-      case 'button':
-        this.validateButtonProps(props as ButtonProps)
-        break
-      case 'listview':
-        this.validateListViewProps(props as ListViewProps)
-        break
-      case 'input':
-        this.validateInputProps(props as InputProps)
-        break
-      case 'toggle':
-        this.validateToggleProps(props as ToggleProps)
-        break
-      case 'badge':
-        this.validateBadgeProps(props as BadgeProps)
-        break
-      case 'divider':
-        this.validateDividerProps(props as DividerProps)
-        break
+    const isValid = componentRegistry.validateProps(type, props)
+    if (!isValid) {
+      const err = componentRegistry.getPropsError(type, props)
+      if (err) throw new Error(err)
     }
   }
 

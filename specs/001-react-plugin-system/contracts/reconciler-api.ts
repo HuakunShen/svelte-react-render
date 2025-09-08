@@ -52,7 +52,7 @@ export interface HostContext {
 
 // Svelte Component Instance (created by reconciler)
 export interface SvelteComponentInstance {
-  type: 'button' | 'listview' | 'input' | 'toggle' | 'badge' | 'divider';
+  type: string;
   svelteComponent: any; // SvelteComponent instance
   props: Record<string, any>;
   children: Array<SvelteComponentInstance | Text>;
@@ -73,37 +73,11 @@ export interface ReconcilerFactory {
 }
 
 // Component Type Mapping
-export type ReconcilerComponentType =
-  | 'plugin-button'
-  | 'plugin-listview'
-  | 'plugin-input'
-  | 'plugin-toggle'
-  | 'plugin-badge'
-  | 'plugin-divider';
+export type ReconcilerComponentType = string;
 
 export interface ComponentTypeMapping {
-  'plugin-button': {
-    props: import('./plugin-api').ButtonProps;
-    svelteComponent: 'Button';
-  };
-  'plugin-listview': {
-    props: import('./plugin-api').ListViewProps;
-    svelteComponent: 'ListView';
-  };
-  'plugin-input': {
-    props: import('./plugin-api').InputProps;
-    svelteComponent: 'Input';
-  };
-  'plugin-toggle': {
-    props: import('./plugin-api').ToggleProps;
-    svelteComponent: 'Toggle';
-  };
-  'plugin-badge': {
-    props: import('./plugin-api').BadgeProps;
-    svelteComponent: 'Badge';
-  };
-  'plugin-divider': {
-    props: import('./plugin-api').DividerProps;
-    svelteComponent: 'Divider';
+  [type: string]: {
+    props: any;
+    svelteComponent: string;
   };
 }
