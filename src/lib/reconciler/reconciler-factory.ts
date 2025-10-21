@@ -8,7 +8,8 @@ import type {
 import hostConfig, { type SvelteHostContext } from './host-config'
 
 // Create the reconciler instance
-const reconciler = ReactReconciler(hostConfig as any)
+// @ts-ignore
+const reconciler = ReactReconciler(hostConfig)
 
 // Set display name for debugging
 if (process.env.NODE_ENV === 'development') {
