@@ -11,8 +11,8 @@
     }
   },
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "tsdown",
+    "dev": "tsdown --watch",
     "format": "prettier --write ."
   },
   "dependencies": {
@@ -21,9 +21,10 @@
     "react-reconciler": "^0.29.2"
   },
   "devDependencies": {
+    "@tsconfig/strictest": "^2.0.6",
     "@types/react": "^18.3.12",
     "@types/react-reconciler": "^0.28.8",
-    "tsup": "^8.3.5",
+    "tsdown": "^0.15.9",
     "typescript": "~5.8.3",
     "prettier": "^3.6.2"
   },
