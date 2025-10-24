@@ -4,14 +4,19 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter app dev",
-    "build": "pnpm --filter api build && pnpm --filter app build",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
     "build:api": "pnpm --filter api build",
     "preview": "pnpm --filter app preview",
     "check": "pnpm --filter app check",
-    "format": "pnpm -r run format"
+    "format": "turbo run format"
   },
   "devDependencies": {
-    "typescript": "~5.8.3"
+    "typescript": "~5.8.3",
+    "turbo": "^2.5.5"
+  },
+  "packageManager": "pnpm@10.18.0",
+  "engines": {
+    "node": ">=18"
   }
 }
