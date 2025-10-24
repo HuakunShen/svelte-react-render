@@ -33,6 +33,7 @@ export default function AdvancedDemo() {
   const [submitted, setSubmitted] = useState(false);
 
   const handleInputChange = (field: keyof FormData, value: string | boolean) => {
+    console.log('handleInputChange', field, value);
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -193,7 +194,7 @@ export default function AdvancedDemo() {
       {submitted && (
         <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
           <div className="flex items-start gap-3">
-            <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center shrink-0 mt-0.5">
               <span className="text-white text-xs">✓</span>
             </div>
             <div className="space-y-1">
