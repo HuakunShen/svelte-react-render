@@ -1,5 +1,5 @@
-import { createElement } from 'react';
-import type { ReactElement, ReactNode } from 'react';
+import { createElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 
 // Form component wrappers
 export interface FormFieldProps {
@@ -31,7 +31,7 @@ export interface FormFieldErrorsProps {
 export interface FormButtonProps {
   children?: ReactNode;
   className?: string;
-  type?: 'button' | 'submit' | 'reset';
+  type?: "button" | "submit" | "reset";
   onClick?: () => void;
   disabled?: boolean;
 }
@@ -43,7 +43,7 @@ export function FormField({
   className,
 }: FormFieldProps): ReactElement {
   return createElement(
-    'FormField' as any,
+    "FormField",
     {
       name,
       form,
@@ -58,7 +58,7 @@ export function FormControl({
   className,
 }: FormControlProps): ReactElement {
   return createElement(
-    'FormControl' as any,
+    "FormControl",
     {
       className,
     },
@@ -71,7 +71,7 @@ export function FormLabel({
   className,
 }: FormLabelProps): ReactElement {
   return createElement(
-    'FormLabel' as any,
+    "FormLabel",
     {
       className,
     },
@@ -84,7 +84,7 @@ export function FormDescription({
   className,
 }: FormDescriptionProps): ReactElement {
   return createElement(
-    'FormDescription' as any,
+    "FormDescription",
     {
       className,
     },
@@ -95,23 +95,20 @@ export function FormDescription({
 export function FormFieldErrors({
   className,
 }: FormFieldErrorsProps): ReactElement {
-  return createElement(
-    'FormFieldErrors' as any,
-    {
-      className,
-    },
-  );
+  return createElement("FormFieldErrors", {
+    className,
+  });
 }
 
 export function FormButton({
   children,
   className,
-  type = 'submit',
+  type = "submit",
   onClick,
   disabled,
 }: FormButtonProps): ReactElement {
   return createElement(
-    'FormButton' as any,
+    "FormButton",
     {
       className,
       type,

@@ -1,6 +1,6 @@
 // Types for the reconciler bridge between React and Svelte
 
-export type ComponentType = 'Button' | 'Input' | string;
+export type ComponentType = "Button" | "Input" | string;
 
 export interface SvelteComponentInstance {
   type: ComponentType;

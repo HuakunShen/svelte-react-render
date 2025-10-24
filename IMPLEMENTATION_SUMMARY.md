@@ -7,6 +7,7 @@ A complete Raycast-inspired plugin system where React plugins are rendered using
 ## Project Structure
 
 ### Monorepo Setup ✅
+
 - Configured pnpm workspaces
 - Two packages: `@svelte-react-render/api` and `app`
 - Independent build processes
@@ -15,23 +16,27 @@ A complete Raycast-inspired plugin system where React plugins are rendered using
 ### API Package (`packages/api/`) ✅
 
 **React Reconciler:**
+
 - `reconciler/host-config.ts` - Full React reconciler implementation
 - `reconciler/bridge.ts` - Bridge between React and Svelte
 - `reconciler/renderer.ts` - Public render API
 - `reconciler/types.ts` - TypeScript type definitions
 
 **React Components:**
+
 - `List` and `List.Item` - List display
 - `Form` and `Form.TextField` - Form inputs
 - `ActionPanel` and `ActionPanel.Section` - Action menus
 - `Action`, `Action.Push`, `Action.SubmitForm` - Actions
 
 **Hooks & Constants:**
+
 - `useNavigation()` - Navigation API with push/pop
 - `Icon` - Icon constants (Circle, Checkmark, Pencil, Trash, etc.)
 - `NavigationContext` - React context for navigation
 
 **Build Output:**
+
 - ESM bundle with TypeScript declarations
 - Exported as npm-like package
 - Workspace dependencies properly linked
@@ -39,6 +44,7 @@ A complete Raycast-inspired plugin system where React plugins are rendered using
 ### App Package (`packages/app/`) ✅
 
 **Svelte 5 UI Components:**
+
 - `ListView.svelte` - Scrollable list container
 - `ListItem.svelte` - List items with icons and click handlers
 - `Button.svelte` - Action buttons with shortcuts
@@ -47,21 +53,21 @@ A complete Raycast-inspired plugin system where React plugins are rendered using
 - `FormView.svelte` - Form layout
 
 **Plugin System:**
+
 - `PluginHost.svelte` - React plugin mounting and rendering
   - Creates render bridge
   - Manages navigation stack
   - Wraps plugin with NavigationContext
   - Renders navigation overlays
-  
 - `ComponentRenderer.svelte` - Instance-to-Svelte mapper
   - Recursively renders component tree
   - Manages form state
   - Handles action execution
   - Triggers navigation
-  
 - `PluginContext.ts` - Shared state management
 
 **Demo Plugin:**
+
 - `plugins/todo.tsx` - Full TODO list application
   - Written in pure React
   - Uses API package components
@@ -69,6 +75,7 @@ A complete Raycast-inspired plugin system where React plugins are rendered using
   - Separate file simulating real plugin architecture
 
 **Main Application:**
+
 - `App.svelte` - Host application
   - Creates React element from plugin
   - Renders via PluginHost
@@ -77,6 +84,7 @@ A complete Raycast-inspired plugin system where React plugins are rendered using
 ## Key Technical Achievements
 
 ### 1. Custom React Reconciler
+
 - Implemented complete `HostConfig` interface
 - Handles component lifecycle (create, update, remove)
 - Supports mutation (appendChild, removeChild, etc.)
@@ -84,12 +92,14 @@ A complete Raycast-inspired plugin system where React plugins are rendered using
 - Update payload optimization
 
 ### 2. Svelte 5 Integration
+
 - Uses modern Svelte 5 runes (`$state`, `$props`, `$derived`)
 - Self-imports for recursive rendering (replaced deprecated `<svelte:self>`)
 - Snippet-based composition for flexible layouts
 - Reactive state management
 
 ### 3. Navigation System
+
 - React Context for navigation API
 - Bridge-based navigation stack
 - Subscriber pattern for updates
@@ -97,12 +107,14 @@ A complete Raycast-inspired plugin system where React plugins are rendered using
 - Action.Push integration with navigation
 
 ### 4. Form Handling
+
 - Component-level form state
 - Field value collection
 - Form submission with callbacks
 - Integration with Action.SubmitForm
 
 ### 5. Action System
+
 - Context-sensitive actions per list item
 - Global actions for lists and forms
 - Action panels with sections
@@ -113,24 +125,25 @@ A complete Raycast-inspired plugin system where React plugins are rendered using
 
 React (API) → Reconciler → Svelte (UI)
 
-| React Component | Reconciler Type | Svelte Component |
-|----------------|----------------|------------------|
-| List | 'List' | ListView.svelte |
-| List.Item | 'ListItem' | ListItem.svelte |
-| ActionPanel | 'ActionPanel' | ActionPanel.svelte |
+| React Component     | Reconciler Type      | Svelte Component   |
+| ------------------- | -------------------- | ------------------ |
+| List                | 'List'               | ListView.svelte    |
+| List.Item           | 'ListItem'           | ListItem.svelte    |
+| ActionPanel         | 'ActionPanel'        | ActionPanel.svelte |
 | ActionPanel.Section | 'ActionPanelSection' | (div with styling) |
-| Action | 'Action' | Button.svelte |
-| Action.Push | 'ActionPush' | Button.svelte |
-| Action.SubmitForm | 'ActionSubmitForm' | Button.svelte |
-| Form | 'Form' | FormView.svelte |
-| Form.TextField | 'FormTextField' | TextField.svelte |
+| Action              | 'Action'             | Button.svelte      |
+| Action.Push         | 'ActionPush'         | Button.svelte      |
+| Action.SubmitForm   | 'ActionSubmitForm'   | Button.svelte      |
+| Form                | 'Form'               | FormView.svelte    |
+| Form.TextField      | 'FormTextField'      | TextField.svelte   |
 
 ## Development Experience
 
 ### For Plugin Developers
+
 ```tsx
 // Write pure React code
-import { List, Action, useNavigation } from '@svelte-react-render/api';
+import { List, Action, useNavigation } from "@svelte-react-render/api";
 
 export default function MyPlugin() {
   const [items, setItems] = useState([]);
@@ -139,11 +152,12 @@ export default function MyPlugin() {
 ```
 
 ### For Host App Developers
+
 ```svelte
 <script lang="ts">
   import PluginHost from './plugin/PluginHost.svelte';
   import MyPlugin from './plugins/my-plugin';
-  
+
   const element = createElement(MyPlugin);
 </script>
 
@@ -151,12 +165,14 @@ export default function MyPlugin() {
 ```
 
 ## Type Safety
+
 - Full TypeScript support throughout
 - No type errors or warnings
 - Proper interface definitions
 - Generic type constraints where needed
 
 ## Code Quality
+
 - Zero linter errors
 - Zero Svelte check warnings
 - Clean separation of concerns
@@ -166,12 +182,15 @@ export default function MyPlugin() {
 ## Files Created/Modified
 
 ### New Files (59 total)
+
 **API Package (13 files):**
+
 - package.json, tsconfig.json, tsup.config.ts
 - 6 TypeScript component/hook/constant files
 - 4 reconciler implementation files
 
 **App Package (43 files):**
+
 - package.json, tsconfig.json, vite.config.ts, svelte.config.js
 - 6 Svelte UI components
 - 3 plugin system files
@@ -179,10 +198,12 @@ export default function MyPlugin() {
 - App.svelte, main.ts, app.css, index.html
 
 **Root (3 files):**
+
 - pnpm-workspace.yaml
 - TESTING.md, README_PROJECT.md, IMPLEMENTATION_SUMMARY.md
 
 ### Modified Files
+
 - Root package.json (workspace scripts)
 - README.md (original requirements preserved)
 
@@ -198,6 +219,7 @@ export default function MyPlugin() {
 ## Next Steps for User
 
 1. **Run the application:**
+
    ```bash
    pnpm dev
    ```
@@ -231,4 +253,3 @@ export default function MyPlugin() {
 ## Conclusion
 
 The implementation successfully demonstrates a production-ready architecture for building plugin systems where React plugins are rendered using Svelte components. The custom reconciler provides a clean abstraction layer, and the development experience mirrors established patterns like Raycast's extension API.
-

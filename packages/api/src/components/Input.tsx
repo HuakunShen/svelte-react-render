@@ -1,5 +1,5 @@
-import { createElement } from 'react';
-import type { ReactElement } from 'react';
+import { createElement } from "react";
+import type { ReactElement } from "react";
 
 export interface InputProps {
   id?: string;
@@ -18,21 +18,18 @@ export function Input({
   defaultValue,
   placeholder,
   label,
-  type = 'text',
+  type = "text",
   onChange,
   onInput,
 }: InputProps): ReactElement {
-  return createElement(
-    'Input' as any,
-    {
-      id,
-      value,
-      defaultValue,
-      placeholder,
-      label,
-      type,
-      onChange,
-      onInput,
-    },
-  );
+  return createElement("Input", {
+    id,
+    value,
+    defaultValue,
+    placeholder,
+    label,
+    type,
+    onChange,
+    onInput,
+  });
 }

@@ -51,8 +51,8 @@ The current `@svelte-react-render/api` package is **95% framework-agnostic**:
 
 ```typescript
 // packages/api/src/reconciler/renderer.ts
-import ReactReconciler from 'react-reconciler';
-import { hostConfig } from './host-config';
+import ReactReconciler from "react-reconciler";
+import { hostConfig } from "./host-config";
 
 const reconciler = ReactReconciler(hostConfig);
 
@@ -72,11 +72,12 @@ export function render(element: React.ReactElement, bridge) {
 
 ```typescript
 // packages/api/src/reconciler/types.ts
-export interface SvelteComponentInstance { // Misleading name!
-  type: string;              // Component type (e.g., "Button")
+export interface SvelteComponentInstance {
+  // Misleading name!
+  type: string; // Component type (e.g., "Button")
   props: Record<string, any>; // Serializable props
   children: (SvelteComponentInstance | string)[]; // Recursive tree
-  id: string;                // Unique identifier
+  id: string; // Unique identifier
   parent: SvelteComponentInstance | null;
 }
 ```
@@ -135,16 +136,16 @@ Only **naming and packaging** need adjustment:
 <!-- @react-universal/svelte -->
 <script lang="ts">
   import type { ComponentInstance } from '@react-universal/core';
-  
+
   let { instance }: { instance: ComponentInstance } = $props();
-  
+
   // Map component types to Svelte components
   const componentMap = {
     'Button': Button,
     'Input': Input,
     'Chart': Chart,
   };
-  
+
   const Component = componentMap[instance.type];
 </script>
 
@@ -166,29 +167,23 @@ Only **naming and packaging** need adjustment:
 ```vue
 <!-- @react-universal/vue -->
 <template>
-  <component 
-    :is="componentMap[instance.type]" 
-    v-bind="instance.props"
-  >
-    <ComponentRenderer 
-      v-for="child in instance.children" 
-      :instance="child" 
-    />
+  <component :is="componentMap[instance.type]" v-bind="instance.props">
+    <ComponentRenderer v-for="child in instance.children" :instance="child" />
   </component>
 </template>
 
 <script setup lang="ts">
-import type { ComponentInstance } from '@react-universal/core';
-import Button from './components/Button.vue';
-import Input from './components/Input.vue';
+import type { ComponentInstance } from "@react-universal/core";
+import Button from "./components/Button.vue";
+import Input from "./components/Input.vue";
 
 const props = defineProps<{
   instance: ComponentInstance;
 }>();
 
 const componentMap = {
-  'Button': Button,
-  'Input': Input,
+  Button: Button,
+  Input: Input,
 };
 </script>
 ```
@@ -208,15 +203,15 @@ class ComponentRenderer {
       button.target = self
       button.action = #selector(handleAction)
       return button
-      
+
     case "Input":
       let textField = NSTextField()
       textField.placeholderString = instance.props["placeholder"] as? String
       return textField
-      
+
     case "Chart":
       return ChartView(data: instance.props["data"])
-      
+
     default:
       return NSView() // Unknown component
     }
@@ -233,13 +228,13 @@ Every adapter must implement:
 export interface HostAdapter {
   // Render a component instance
   render(instance: ComponentInstance): FrameworkComponent;
-  
+
   // Subscribe to updates
   subscribe(callback: () => void): () => void;
-  
+
   // Handle prop updates
   updateProps(instance: ComponentInstance, newProps: any): void;
-  
+
   // Handle event callbacks
   executeHandler(handlerId: string, ...args: any[]): Promise<void>;
 }
@@ -319,12 +314,12 @@ MP4 Video
 
 ```typescript
 // Generated types from component definitions
-declare module '@your-company/plugin-api' {
+declare module "@your-company/plugin-api" {
   export interface ChartProps {
     data: Array<{ x: number; y: number }>;
-    type: 'line' | 'bar';
+    type: "line" | "bar";
   }
-  
+
   export function Chart(props: ChartProps): JSX.Element;
 }
 ```
@@ -343,7 +338,7 @@ props._onClickHandlerId = handlerId;
 // Host: Create proxy
 onClick: async () => {
   await rpc.executeHandler(handlerId);
-}
+};
 ```
 
 #### Challenge 3: Platform-Specific Features
@@ -354,10 +349,10 @@ onClick: async () => {
 
 ```typescript
 // Base API (works everywhere)
-import { Button, Input } from '@react-universal/api';
+import { Button, Input } from "@react-universal/api";
 
 // Platform extensions (optional)
-import { Window, Menu } from '@react-universal/api/appkit';
+import { Window, Menu } from "@react-universal/api/appkit";
 ```
 
 #### Challenge 4: Component Protocol Versioning
@@ -368,11 +363,11 @@ import { Window, Menu } from '@react-universal/api/appkit';
 
 ```typescript
 // API package exports version
-export const PROTOCOL_VERSION = '1.0.0';
+export const PROTOCOL_VERSION = "1.0.0";
 
 // Host checks compatibility
 if (!isCompatible(plugin.protocolVersion, HOST_VERSION)) {
-  throw new Error('Incompatible plugin version');
+  throw new Error("Incompatible plugin version");
 }
 ```
 
@@ -406,7 +401,7 @@ if (!isCompatible(plugin.protocolVersion, HOST_VERSION)) {
 ✅ **Familiar API** - Standard React + hooks  
 ✅ **Type safety** - Full TypeScript support  
 ✅ **Large ecosystem** - npm packages work  
-✅ **Better tools** - React DevTools, linters  
+✅ **Better tools** - React DevTools, linters
 
 ### For Host Developers
 
@@ -414,7 +409,7 @@ if (!isCompatible(plugin.protocolVersion, HOST_VERSION)) {
 ✅ **Native performance** - Render with native components  
 ✅ **Full control** - Define custom component implementations  
 ✅ **Framework choice** - Use Svelte, Vue, Angular, etc.  
-✅ **Security** - Sandboxed plugin execution  
+✅ **Security** - Sandboxed plugin execution
 
 ### For Platform
 
@@ -422,7 +417,7 @@ if (!isCompatible(plugin.protocolVersion, HOST_VERSION)) {
 ✅ **Network effects** - More plugins → more users  
 ✅ **Developer adoption** - React is widely known  
 ✅ **Monetization** - Plugin marketplace potential  
-✅ **Community growth** - Open ecosystem  
+✅ **Community growth** - Open ecosystem
 
 ## Recommended Next Steps
 
@@ -441,9 +436,8 @@ if (!isCompatible(plugin.protocolVersion, HOST_VERSION)) {
 
 ## Conclusion
 
-**This is not just feasible—it's the natural evolution of your architecture.** 
+**This is not just feasible—it's the natural evolution of your architecture.**
 
 Your current implementation is already 95% framework-agnostic. With minimal refactoring (mostly naming and packaging), you can create a truly universal React plugin API that works across any platform.
 
 The technical foundation is solid, the pattern is proven, and the market opportunity is significant.
-

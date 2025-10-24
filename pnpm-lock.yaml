@@ -30,6 +30,9 @@ importers:
       '@types/react-reconciler':
         specifier: ^0.28.8
         version: 0.28.9(@types/react@18.3.26)
+      prettier:
+        specifier: ^3.6.2
+        version: 3.6.2
       tsup:
         specifier: ^8.3.5
         version: 8.5.0(jiti@2.6.1)(postcss@8.5.6)(typescript@5.8.3)

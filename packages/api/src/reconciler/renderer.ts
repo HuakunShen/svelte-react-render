@@ -1,6 +1,6 @@
-import ReactReconciler from 'react-reconciler';
-import { hostConfig } from './host-config';
-import { createRenderBridge, type SimpleRenderBridge } from './bridge';
+import ReactReconciler from "react-reconciler";
+import { hostConfig } from "./host-config";
+import { createRenderBridge, type SimpleRenderBridge } from "./bridge";
 
 const reconciler = ReactReconciler(hostConfig);
 
@@ -9,7 +9,10 @@ export function createRenderer(): SimpleRenderBridge & { _container?: any } {
   return { ...bridge, _container: undefined };
 }
 
-export function render(element: React.ReactElement, bridgeWithContainer: SimpleRenderBridge & { _container?: any }): void {
+export function render(
+  element: React.ReactElement,
+  bridgeWithContainer: SimpleRenderBridge & { _container?: any },
+): void {
   // Create container only once, reuse it for subsequent renders
   if (!bridgeWithContainer._container) {
     bridgeWithContainer._container = reconciler.createContainer(
@@ -18,14 +21,18 @@ export function render(element: React.ReactElement, bridgeWithContainer: SimpleR
       null, // hydration callbacks
       false, // isStrictMode
       null, // concurrentUpdatesByDefaultOverride
-      '', // identifierPrefix
+      "", // identifierPrefix
       () => {}, // onRecoverableError
-      null // transitionCallbacks
+      null, // transitionCallbacks
     );
   }
 
-  reconciler.updateContainer(element, bridgeWithContainer._container, null, () => {});
+  reconciler.updateContainer(
+    element,
+    bridgeWithContainer._container,
+    null,
+    () => {},
+  );
 }
 
 export { createRenderBridge };
-

@@ -1,5 +1,5 @@
-import { createElement } from 'react';
-import type { ReactElement, ReactNode } from 'react';
+import { createElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 
 export interface SwitchProps {
   checked?: boolean;
@@ -21,7 +21,7 @@ export function Switch({
   className,
 }: SwitchProps): ReactElement {
   return createElement(
-    'Switch' as any,
+    "Switch",
     {
       checked,
       defaultChecked,

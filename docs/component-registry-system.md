@@ -5,6 +5,7 @@
 Create a **universal component registry** that any Svelte application can install. Host developers register their custom Svelte components (e.g., mapping `"Chart"` to their `<Chart />` component), and then React plugins using these registered component names will automatically render with the host's implementations.
 
 This enables a **plugin marketplace ecosystem** where:
+
 - Plugin developers write React code using a standard API
 - Host developers define their own UI implementations
 - Plugins work seamlessly across different hosts with different designs
@@ -60,12 +61,12 @@ Different hosts can provide different UI implementations:
 
 ```typescript
 // Host A: Material Design
-registry.register('Button', MaterialButton);
-registry.register('Input', MaterialInput);
+registry.register("Button", MaterialButton);
+registry.register("Input", MaterialInput);
 
 // Host B: Fluent Design
-registry.register('Button', FluentButton);
-registry.register('Input', FluentInput);
+registry.register("Button", FluentButton);
+registry.register("Input", FluentInput);
 
 // Same plugin works in both, but looks native to each!
 ```
@@ -74,24 +75,24 @@ registry.register('Input', FluentInput);
 
 ```typescript
 // Dashboard App
-registry.register('Chart', ApexChartWrapper);
-registry.register('Map', MapboxWrapper);
+registry.register("Chart", ApexChartWrapper);
+registry.register("Map", MapboxWrapper);
 
 // Data Science App
-registry.register('Chart', PlotlyWrapper);
-registry.register('Map', LeafletWrapper);
+registry.register("Chart", PlotlyWrapper);
+registry.register("Map", LeafletWrapper);
 ```
 
 ### 3. Business Logic Separation
 
 ```typescript
 // Core components
-registry.register('Button', MyButton);
-registry.register('Form', MyForm);
+registry.register("Button", MyButton);
+registry.register("Form", MyForm);
 
 // Business-specific components
-registry.register('CustomerCard', CustomerCardComponent);
-registry.register('OrderTable', OrderTableComponent);
+registry.register("CustomerCard", CustomerCardComponent);
+registry.register("OrderTable", OrderTableComponent);
 
 // Plugins can use both!
 ```
@@ -123,7 +124,7 @@ registry.register('OrderTable', OrderTableComponent);
 
 ```typescript
 // packages/svelte/src/registry.svelte.ts
-import type { ComponentType, SvelteComponent } from 'svelte';
+import type { ComponentType, SvelteComponent } from "svelte";
 
 export interface ComponentMetadata {
   component: ComponentType;
@@ -133,57 +134,57 @@ export interface ComponentMetadata {
 
 class ComponentRegistry {
   private components = new Map<string, ComponentMetadata>();
-  
+
   /**
    * Register a Svelte component for a given type name
    */
   register(
-    name: string, 
+    name: string,
     component: ComponentType,
-    metadata?: Omit<ComponentMetadata, 'component'>
+    metadata?: Omit<ComponentMetadata, "component">,
   ): void {
     this.components.set(name, {
       component,
-      ...metadata
+      ...metadata,
     });
     console.log(`[Registry] Registered component: ${name}`);
   }
-  
+
   /**
    * Get a registered component
    */
   get(name: string): ComponentType | undefined {
     return this.components.get(name)?.component;
   }
-  
+
   /**
    * Check if a component is registered
    */
   has(name: string): boolean {
     return this.components.has(name);
   }
-  
+
   /**
    * Get metadata for a component
    */
   getMetadata(name: string): ComponentMetadata | undefined {
     return this.components.get(name);
   }
-  
+
   /**
    * Unregister a component
    */
   unregister(name: string): boolean {
     return this.components.delete(name);
   }
-  
+
   /**
    * Get all registered component names
    */
   list(): string[] {
     return Array.from(this.components.keys());
   }
-  
+
   /**
    * Clear all registrations
    */
@@ -206,19 +207,19 @@ export { ComponentRegistry };
 <script lang="ts">
   import { registry } from './registry.svelte';
   import type { ComponentInstance } from '@react-universal/core';
-  
+
   interface Props {
     instance: ComponentInstance;
   }
-  
+
   let { instance }: Props = $props();
-  
+
   // Get registered component
   const Component = registry.get(instance.type);
-  
+
   // Recursively render children
   const children = instance.children;
-  
+
   // Warn if component not registered
   $effect(() => {
     if (!Component && instance.type !== 'div' && instance.type !== 'span') {
@@ -271,13 +272,13 @@ export { ComponentRegistry };
     padding: 1rem;
     background: #fff5f5;
   }
-  
+
   .unknown-component-warning {
     color: #c92a2a;
     font-size: 0.875rem;
     margin-bottom: 0.5rem;
   }
-  
+
   code {
     background: #ffebee;
     padding: 0.125rem 0.25rem;
@@ -297,37 +298,37 @@ export { ComponentRegistry };
   import DynamicRenderer from './DynamicRenderer.svelte';
   import type { ReactElement } from 'react';
   import type { ComponentInstance } from '@react-universal/core';
-  
+
   interface Props {
     plugin: ReactElement;
   }
-  
+
   let { plugin }: Props = $props();
-  
+
   let rootInstance = $state<ComponentInstance | null>(null);
   let bridge = $state<any>(null);
   let unsubscribe: (() => void) | null = null;
-  
+
   onMount(() => {
     // Create renderer bridge
     bridge = createRenderer();
-    
+
     // Subscribe to updates
     unsubscribe = bridge.subscribe(() => {
       rootInstance = bridge.rootInstance;
     });
-    
+
     // Initial render
     render(plugin, bridge);
   });
-  
+
   // Watch for plugin changes
   $effect(() => {
     if (bridge && plugin) {
       render(plugin, bridge);
     }
   });
-  
+
   onDestroy(() => {
     if (unsubscribe) {
       unsubscribe();
@@ -350,7 +351,7 @@ export { ComponentRegistry };
     width: 100%;
     height: 100%;
   }
-  
+
   .loading {
     display: flex;
     align-items: center;
@@ -365,12 +366,12 @@ export { ComponentRegistry };
 
 ```typescript
 // packages/plugin-api/src/index.ts
-import { createElement } from 'react';
+import { createElement } from "react";
 
 // Define component prop types
 export interface ChartProps {
   data: Array<{ x: number | string; y: number }>;
-  type: 'line' | 'bar' | 'pie' | 'scatter';
+  type: "line" | "bar" | "pie" | "scatter";
   title?: string;
   height?: number;
   width?: number;
@@ -378,7 +379,7 @@ export interface ChartProps {
 }
 
 export function Chart(props: ChartProps): JSX.Element {
-  return createElement('Chart', props);
+  return createElement("Chart", props);
 }
 
 export interface DataGridProps {
@@ -390,12 +391,12 @@ export interface DataGridProps {
   }>;
   data: any[];
   onRowClick?: (row: any) => void;
-  onSort?: (field: string, direction: 'asc' | 'desc') => void;
+  onSort?: (field: string, direction: "asc" | "desc") => void;
   loading?: boolean;
 }
 
 export function DataGrid(props: DataGridProps): JSX.Element {
-  return createElement('DataGrid', props);
+  return createElement("DataGrid", props);
 }
 
 export interface MapProps {
@@ -406,7 +407,7 @@ export interface MapProps {
 }
 
 export function Map(props: MapProps): JSX.Element {
-  return createElement('Map', props);
+  return createElement("Map", props);
 }
 
 // Export all component types
@@ -422,23 +423,23 @@ export type { ChartProps, DataGridProps, MapProps };
 <script lang="ts">
   import { registry, PluginHost } from '@react-universal/svelte';
   import { onMount } from 'svelte';
-  
+
   // Import custom components
   import MyChart from './components/MyChart.svelte';
   import MyDataGrid from './components/MyDataGrid.svelte';
   import MyMap from './components/MyMap.svelte';
   import MyButton from './components/MyButton.svelte';
-  
+
   // Plugin URL
   let pluginUrl = 'https://cdn.example.com/plugins/analytics.js';
-  
+
   onMount(() => {
     // Register custom implementations
     registry.register('Chart', MyChart);
     registry.register('DataGrid', MyDataGrid);
     registry.register('Map', MyMap);
     registry.register('Button', MyButton);
-    
+
     console.log('Registered components:', registry.list());
   });
 </script>
@@ -453,40 +454,36 @@ export type { ChartProps, DataGridProps, MapProps };
 
 ```tsx
 // analytics-plugin.tsx
-import { useState, useEffect } from 'react';
-import { Chart, DataGrid, Button } from '@company/plugin-api';
+import { useState, useEffect } from "react";
+import { Chart, DataGrid, Button } from "@company/plugin-api";
 
 export default function AnalyticsPlugin() {
   const [data, setData] = useState([]);
-  const [timeRange, setTimeRange] = useState('7d');
-  
+  const [timeRange, setTimeRange] = useState("7d");
+
   useEffect(() => {
     fetchData(timeRange).then(setData);
   }, [timeRange]);
-  
+
   return (
     <div className="analytics-plugin">
       <div className="controls">
-        <Button onClick={() => setTimeRange('7d')}>
-          Last 7 Days
-        </Button>
-        <Button onClick={() => setTimeRange('30d')}>
-          Last 30 Days
-        </Button>
+        <Button onClick={() => setTimeRange("7d")}>Last 7 Days</Button>
+        <Button onClick={() => setTimeRange("30d")}>Last 30 Days</Button>
       </div>
-      
-      <Chart 
+
+      <Chart
         data={data}
         type="line"
         title="Revenue Over Time"
         onPointClick={(point) => console.log(point)}
       />
-      
+
       <DataGrid
         columns={[
-          { field: 'date', header: 'Date' },
-          { field: 'revenue', header: 'Revenue' },
-          { field: 'users', header: 'Users' }
+          { field: "date", header: "Date" },
+          { field: "revenue", header: "Revenue" },
+          { field: "users", header: "Users" },
         ]}
         data={data}
         onRowClick={(row) => console.log(row)}
@@ -503,16 +500,16 @@ export default function AnalyticsPlugin() {
 <script lang="ts">
   import ApexChart from 'svelte-apexcharts';
   import type { ChartProps } from '@company/plugin-api';
-  
-  let { 
-    data, 
-    type, 
-    title, 
-    height = 400, 
+
+  let {
+    data,
+    type,
+    title,
+    height = 400,
     width,
-    onPointClick 
+    onPointClick
   }: ChartProps = $props();
-  
+
   const options = {
     chart: {
       type,
@@ -545,20 +542,20 @@ Generate TypeScript types from registered components:
 
 ```typescript
 // tools/generate-types.ts
-import { registry } from '@react-universal/svelte';
+import { registry } from "@react-universal/svelte";
 
 function generateTypes() {
   const components = registry.list();
-  
+
   let types = `declare module '@company/plugin-api' {\n`;
-  
-  components.forEach(name => {
+
+  components.forEach((name) => {
     const metadata = registry.getMetadata(name);
     types += `  export function ${name}(props: ${name}Props): JSX.Element;\n`;
   });
-  
+
   types += `}\n`;
-  
+
   return types;
 }
 ```
@@ -567,12 +564,12 @@ function generateTypes() {
 
 ```typescript
 // Validate props at registration time
-registry.register('Chart', ChartComponent, {
+registry.register("Chart", ChartComponent, {
   propTypes: {
-    data: { type: 'array', required: true },
-    type: { type: 'enum', values: ['line', 'bar', 'pie'] },
-    title: { type: 'string', required: false }
-  }
+    data: { type: "array", required: true },
+    type: { type: "enum", values: ["line", "bar", "pie"] },
+    title: { type: "string", required: false },
+  },
 });
 ```
 
@@ -580,8 +577,8 @@ registry.register('Chart', ChartComponent, {
 
 ```typescript
 // Register with lazy loading
-registry.register('Chart', async () => {
-  const module = await import('./components/HeavyChart.svelte');
+registry.register("Chart", async () => {
+  const module = await import("./components/HeavyChart.svelte");
   return module.default;
 });
 ```
@@ -591,10 +588,10 @@ registry.register('Chart', async () => {
 ```typescript
 // Create isolated registry for specific use cases
 const dashboardRegistry = new ComponentRegistry();
-dashboardRegistry.register('Chart', DashboardChart);
+dashboardRegistry.register("Chart", DashboardChart);
 
 const reportRegistry = new ComponentRegistry();
-reportRegistry.register('Chart', ReportChart);
+reportRegistry.register("Chart", ReportChart);
 ```
 
 ## Technical Feasibility
@@ -610,14 +607,14 @@ reportRegistry.register('Chart', ReportChart);
 
 ### Implementation Effort
 
-| Component | Estimated Time | Complexity |
-|-----------|---------------|------------|
-| Registry Core | 2-3 hours | Low |
-| DynamicRenderer | 3-4 hours | Medium |
-| Documentation | 4-6 hours | Low |
-| Testing | 6-8 hours | Medium |
-| Examples | 4-6 hours | Low |
-| **Total** | **~2 days** | **Low-Medium** |
+| Component       | Estimated Time | Complexity     |
+| --------------- | -------------- | -------------- |
+| Registry Core   | 2-3 hours      | Low            |
+| DynamicRenderer | 3-4 hours      | Medium         |
+| Documentation   | 4-6 hours      | Low            |
+| Testing         | 6-8 hours      | Medium         |
+| Examples        | 4-6 hours      | Low            |
+| **Total**       | **~2 days**    | **Low-Medium** |
 
 ## Benefits
 
@@ -627,7 +624,7 @@ reportRegistry.register('Chart', ReportChart);
 ✅ **Brand consistency** - Use your design system  
 ✅ **Flexibility** - Swap implementations without changing plugins  
 ✅ **Performance** - Optimize components for your use case  
-✅ **Business logic** - Inject domain-specific components  
+✅ **Business logic** - Inject domain-specific components
 
 ### For Plugin Developers
 
@@ -635,7 +632,7 @@ reportRegistry.register('Chart', ReportChart);
 ✅ **No UI concerns** - Host handles all rendering  
 ✅ **Wide compatibility** - Plugins work across all hosts  
 ✅ **Type safety** - Full TypeScript support  
-✅ **Familiar tools** - Standard React workflow  
+✅ **Familiar tools** - Standard React workflow
 
 ### For Platform
 
@@ -643,19 +640,21 @@ reportRegistry.register('Chart', ReportChart);
 ✅ **Network effects** - More plugins → more value  
 ✅ **Differentiation** - Unique plugin architecture  
 ✅ **Developer adoption** - Easy to build plugins  
-✅ **Monetization** - Paid plugins, premium features  
+✅ **Monetization** - Paid plugins, premium features
 
 ## Comparison with Alternatives
 
 ### vs. Direct React Rendering
 
 **Registry Approach:**
+
 - ✅ Host controls UI
 - ✅ Consistent design system
 - ✅ Platform-specific optimizations
 - ❌ Additional abstraction layer
 
 **Direct React:**
+
 - ✅ Simpler for plugin devs
 - ❌ Host loses control
 - ❌ Inconsistent UI across plugins
@@ -664,12 +663,14 @@ reportRegistry.register('Chart', ReportChart);
 ### vs. Web Components
 
 **Registry Approach:**
+
 - ✅ Framework-specific optimizations
 - ✅ Full ecosystem integration
 - ✅ Type safety
 - ❌ Framework-specific
 
 **Web Components:**
+
 - ✅ Framework-agnostic
 - ❌ Limited integration
 - ❌ Performance overhead
@@ -704,9 +705,9 @@ reportRegistry.register('Chart', ReportChart);
 
 ```javascript
 // Register custom block
-registerBlockType('my-plugin/chart', {
+registerBlockType("my-plugin/chart", {
   edit: ChartEdit,
-  save: ChartSave
+  save: ChartSave,
 });
 ```
 
@@ -714,14 +715,14 @@ registerBlockType('my-plugin/chart', {
 
 ```typescript
 // Register custom views
-vscode.window.registerTreeDataProvider('myView', provider);
+vscode.window.registerTreeDataProvider("myView", provider);
 ```
 
 ### Capacitor Plugins
 
 ```typescript
 // Register native plugins
-import { Plugins } from '@capacitor/core';
+import { Plugins } from "@capacitor/core";
 Plugins.MyPlugin.register();
 ```
 
@@ -738,10 +739,10 @@ Plugins.MyPlugin.register();
 **This is not just feasible—it's a natural extension of your current architecture.**
 
 The component registry system would:
+
 - Take ~2 days to implement
 - Unlock massive ecosystem potential
 - Enable platform differentiation
 - Provide host flexibility while maintaining plugin simplicity
 
 The technical foundation is solid, the pattern is proven, and the market opportunity is significant. This could be the key differentiator that makes your platform the go-to choice for plugin-based applications.
-

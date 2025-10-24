@@ -47,7 +47,7 @@ export default defineConfig({
 				}
 			}
 		]
-	},
+	}
 	// worker: {
 	// 	format: 'es',
 	// 	rollupOptions: {
