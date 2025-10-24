@@ -1,53 +1,93 @@
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
+import { watch } from 'fs';
 
-console.log('📦 Building plugin...');
+// Check if --dev flag is present
+const isDev = process.argv.includes('--dev');
 
-// Build the plugin using Bun.build() API for full control
-const result = await Bun.build({
-  entrypoints: ['./src/index.tsx'],
-  outdir: './dist',
-  target: 'browser',
-  format: 'esm',
-  splitting: false,
-  minify: false,
-  sourcemap: 'none',
-  define: {
-    'process.env.NODE_ENV': '"production"',
-  },
-  external: [
-    'react',
-    'react/jsx-runtime', 
-    'react/jsx-dev-runtime',
-    '@svelte-react-render/api'
-  ],
-  // Keep React and API as externals - the worker will provide them
-});
+// Extract build logic into a reusable function
+async function buildPlugin() {
+  console.log('📦 Building plugin...');
+  
+  // Set NODE_ENV based on dev mode
+  const nodeEnv = isDev ? '"development"' : '"production"';
+  
+  // Build the plugin using Bun.build() API for full control
+  const result = await Bun.build({
+    entrypoints: ['./src/index.tsx'],
+    outdir: './dist',
+    target: 'browser',
+    format: 'esm',
+    splitting: false,
+    minify: !isDev, // Don't minify in dev mode
+    sourcemap: isDev ? 'external' : 'none', // Enable sourcemaps in dev mode
+    define: {
+      'process.env.NODE_ENV': nodeEnv,
+    },
+    external: [
+      '@svelte-react-render/api'
+    ],
+    // Only keep API as external - React will be bundled
+  });
 
-if (!result.success) {
-  console.error('❌ Build failed:');
-  for (const log of result.logs) {
-    console.error(log);
+  if (!result.success) {
+    console.error('❌ Build failed:');
+    for (const log of result.logs) {
+      console.error(log);
+    }
+    if (!isDev) {
+      process.exit(1);
+    }
+    return false;
   }
-  process.exit(1);
+
+  console.log('✅ Plugin built successfully');
+  console.log('🎉 Build complete! Plugin is ready to be served from the dist folder.');
+  return true;
 }
 
-console.log('✅ Plugin built successfully');
+// Initial build
+await buildPlugin();
 
-// Copy to host app's lib folder (so Vite can process it)
-const hostPluginsDir = join(import.meta.dir, '../demo-sveltekit/src/lib/plugins-dist');
-const sourceFile = join(import.meta.dir, 'dist/index.js');
-const destFile = join(hostPluginsDir, 'advanced-demo.js');
-
-// Ensure the target directory exists
-if (!existsSync(hostPluginsDir)) {
-  mkdirSync(hostPluginsDir, { recursive: true });
-  console.log('📁 Created plugins-dist directory');
+// If in dev mode, set up file watching and HTTP server
+if (isDev) {
+  console.log('👀 Watching for changes in src directory...');
+  
+  const srcDir = join(import.meta.dir, 'src');
+  const distDir = join(import.meta.dir, 'dist');
+  
+  // Start HTTP server using bunx serve to serve the dist folder
+  const serveProcess = Bun.spawn(['bun', 'serve', distDir], {
+    cwd: import.meta.dir,
+    onExit(proc, exitCode, signalCode, error) {
+      if (exitCode !== 0) {
+        console.error(`❌ Server exited with code ${exitCode}`);
+      }
+    },
+  });
+  
+  console.log(`🌐 HTTP server started at http://localhost:3001 serving ${distDir}`);
+  
+  // Watch for changes in the src directory
+  const watcher = watch(srcDir, { recursive: true }, (eventType, filename) => {
+    if (filename) {
+      console.log(`📝 File changed: ${filename}`);
+      buildPlugin().then(success => {
+        if (success) {
+          console.log('🔄 Rebuild complete');
+        }
+      });
+    }
+  });
+  
+  // Handle process termination
+  process.on('SIGINT', () => {
+    console.log('\n🛑 Stopping file watcher and HTTP server...');
+    watcher.close();
+    serveProcess.kill();
+    process.exit(0);
+  });
+  
+  console.log('🚀 Dev mode active. Press Ctrl+C to stop watching and server.');
 }
-
-// Copy the file
-await Bun.write(destFile, Bun.file(sourceFile));
-
-console.log('✅ Plugin copied to:', destFile);
-console.log('🎉 Build complete! Plugin is ready to be loaded from: /src/lib/plugins-dist/advanced-demo.js');
 
