@@ -12,10 +12,11 @@
   let runtimeMode: RuntimeMode = $state('worker');
 
   // For worker mode: use plugin URLs
+  // Simple demo still uses source (dev mode), advanced uses bundled plugin
   let pluginUrl = $derived(
     currentDemo === 'simple'
       ? '/src/lib/plugins/simple-demo.tsx'
-      : '/src/lib/plugins/advanced-demo.tsx'
+      : '/src/lib/plugins-dist/advanced-demo.js'  // Bundled plugin from separate package
   );
 
   // For main thread mode: create React element
@@ -80,7 +81,7 @@
               <div class="h-3 w-3 rounded-full bg-yellow-500"></div>
               <div class="h-3 w-3 rounded-full bg-green-500"></div>
               <span class="ml-4 text-sm text-muted-foreground font-mono">
-                {currentDemo === 'simple' ? 'simple-demo.tsx' : 'advanced-demo.tsx'}
+                {currentDemo === 'simple' ? 'simple-demo.tsx' : 'advanced-demo.js (bundled)'}
               </span>
             </div>
 
