@@ -538,10 +538,19 @@ pnpm dev
 
 ## Documentation
 
+### Architecture & Implementation
+- **[DUAL_MODE_ARCHITECTURE.md](./DUAL_MODE_ARCHITECTURE.md)** - Dual-mode design (worker vs main-thread)
 - **[WORKER_ARCHITECTURE.md](./WORKER_ARCHITECTURE.md)** - Technical architecture details
-- **[DUAL_MODE_ARCHITECTURE.md](./DUAL_MODE_ARCHITECTURE.md)** - Dual-mode design rationale
 - **[QUICK_START.md](./QUICK_START.md)** - User guide with testing scenarios
-- **[.journal/2025-10-24.md](./.journal/2025-10-24.md)** - Development decisions and learnings
+
+### Design Proposals
+- **[docs/framework-agnostic-api.md](./docs/framework-agnostic-api.md)** - Universal API for any framework (Svelte, Vue, Angular, AppKit)
+- **[docs/component-registry-system.md](./docs/component-registry-system.md)** - Dynamic component registry for Svelte hosts
+- **[docs/README.md](./docs/README.md)** - Design documentation overview
+
+### Development Journal
+- **[.journal/2025-10-24.md](./.journal/2025-10-24.md)** - Initial development decisions
+- **[.journal/2025-10-25.md](./.journal/2025-10-25.md)** - Self-contained plugin workers redesign
 
 ## Tech Stack
 
