@@ -1,15 +1,16 @@
 import { RPCChannel, WorkerChildIO } from 'kkrpc';
-import { createElement } from 'react';
-import { createRenderer, render } from '@svelte-react-render/api';
+import * as React from 'react';
+import * as API from '@svelte-react-render/api';
 import type { WorkerAPI, MainThreadAPI, SerializedComponentTree } from './worker-rpc-types';
 import { 
   serializeComponentTree, 
   createSerializationContext,
   type SerializationContext 
-} from './serialization';
+} from './serialization-utils';
+import AdvancedDemo from './advanced-demo';
 
 // Global state for the worker
-let currentBridge: ReturnType<typeof createRenderer> | null = null;
+let currentBridge: ReturnType<typeof API.createRenderer> | null = null;
 let currentElement: React.ReactElement | null = null;
 let serializationContext: SerializationContext | null = null;
 let rpcChannel: RPCChannel<WorkerAPI, MainThreadAPI> | null = null;
@@ -17,57 +18,54 @@ let rpcChannel: RPCChannel<WorkerAPI, MainThreadAPI> | null = null;
 // Initialize RPC channel
 const io = new WorkerChildIO();
 
+// Shared initialization logic
+async function initializePlugin(props?: any) {
+  console.log('[Worker] Initializing AdvancedDemo plugin');
+  
+  try {
+    // Create serialization context for this plugin
+    serializationContext = createSerializationContext();
+
+    // Create a new renderer bridge
+    currentBridge = API.createRenderer();
+    
+    // Subscribe to bridge updates
+    currentBridge.subscribe(() => {
+      if (!currentBridge || !serializationContext || !rpcChannel) return;
+      
+      console.log('[Worker] Bridge updated, serializing tree');
+      
+      // Serialize the component tree
+      const serializedTree = serializeComponentTree(
+        currentBridge.rootInstance,
+        serializationContext
+      ) as SerializedComponentTree | null;
+
+      // Send to main thread
+      const api = rpcChannel.getAPI();
+      api.updateComponentTree(serializedTree);
+    });
+
+    // Create and render the React element
+    currentElement = React.createElement(AdvancedDemo, props);
+    API.render(currentElement, currentBridge);
+
+    console.log('[Worker] AdvancedDemo plugin initialized successfully');
+  } catch (error) {
+    console.error('[Worker] Error initializing plugin:', error);
+    if (rpcChannel) {
+      const api = rpcChannel.getAPI();
+      api.logMessage('error', 'Failed to initialize plugin:', error);
+    }
+    throw error;
+  }
+}
+
 function setupRPC() {
   rpcChannel = new RPCChannel<WorkerAPI, MainThreadAPI>(io, {
     expose: {
-      async renderPlugin(pluginCode: string, props?: any) {
-        console.log('[Worker] Rendering plugin:', pluginCode);
-        
-        try {
-          // Dynamic import of the plugin module
-          const pluginModule = await import(/* @vite-ignore */ pluginCode);
-          const PluginComponent = pluginModule.default;
-
-          if (!PluginComponent) {
-            throw new Error('Plugin module does not have a default export');
-          }
-
-          // Create serialization context for this plugin
-          serializationContext = createSerializationContext();
-
-          // Create a new renderer bridge
-          currentBridge = createRenderer();
-          
-          // Subscribe to bridge updates
-          currentBridge.subscribe(() => {
-            if (!currentBridge || !serializationContext || !rpcChannel) return;
-            
-            console.log('[Worker] Bridge updated, serializing tree');
-            
-            // Serialize the component tree
-            const serializedTree = serializeComponentTree(
-              currentBridge.rootInstance,
-              serializationContext
-            ) as SerializedComponentTree | null;
-
-            // Send to main thread
-            const api = rpcChannel.getAPI();
-            api.updateComponentTree(serializedTree);
-          });
-
-          // Create and render the React element
-          currentElement = createElement(PluginComponent, props);
-          render(currentElement, currentBridge);
-
-          console.log('[Worker] Plugin rendered successfully');
-        } catch (error) {
-          console.error('[Worker] Error rendering plugin:', error);
-          if (rpcChannel) {
-            const api = rpcChannel.getAPI();
-            api.logMessage('error', 'Failed to render plugin:', error);
-          }
-          throw error;
-        }
+      async initialize(props?: any) {
+        return initializePlugin(props);
       },
 
       async updateProps(props: any) {
@@ -80,12 +78,12 @@ function setupRPC() {
 
         try {
           // Re-render with new props
-          const newElement = createElement(
+          const newElement = React.createElement(
             (currentElement as any).type,
             props
           );
           currentElement = newElement;
-          render(newElement, currentBridge);
+          API.render(newElement, currentBridge);
         } catch (error) {
           console.error('[Worker] Error updating props:', error);
           if (rpcChannel) {
@@ -149,4 +147,7 @@ function setupRPC() {
 
 // Initialize on worker start
 setupRPC();
+
+// Auto-initialize the plugin
+initializePlugin();
 

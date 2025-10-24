@@ -9,6 +9,8 @@ This project implements a custom React reconciler that renders React components 
 ### Key Features
 
 - ✨ **React Plugins, Svelte UI**: Write plugins in React, render with beautiful Svelte components
+- 📦 **Self-Contained Workers**: Each plugin is a standalone ES module bundling React, kkRPC, and API
+- 🌐 **External Plugin Loading**: Load plugins from any URL via fetch + blob workers
 - 🔒 **Dual Runtime Modes**: Run plugins in Web Worker (sandboxed) or Main Thread (direct)
 - ⚡ **Runtime Switching**: Toggle between modes without restarting
 - 🎨 **shadcn-svelte Components**: Pre-built UI components with beautiful styling
@@ -17,40 +19,74 @@ This project implements a custom React reconciler that renders React components 
 
 ## Architecture
 
-### Dual-Mode Execution
+### Self-Contained Plugin Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    Plugin System                     │
-├─────────────────────────────────────────────────────┤
-│                                                      │
-│  ⚡ Web Worker Mode          🧵 Main Thread Mode   │
-│  ┌─────────────────┐         ┌──────────────────┐  │
-│  │ Main Thread     │<--RPC-->│ Main Thread      │  │
-│  │ (Svelte)        │         │ (Svelte + React) │  │
-│  └─────────────────┘         └──────────────────┘  │
-│           ↕                           ↕              │
-│  ┌─────────────────┐         ┌──────────────────┐  │
-│  │ Worker Thread   │         │ ComponentRenderer│  │
-│  │ (React)         │         │ (Direct)         │  │
-│  └─────────────────┘         └──────────────────┘  │
-│                                                      │
-│  • Sandboxed                 • Fast                 │
-│  • Secure                    • Simple               │
-│  • Isolated                  • Direct access        │
-└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                      Plugin System                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  ⚡ Web Worker Mode               🧵 Main Thread Mode       │
+│  (External Plugin Loading)        (Direct Import)            │
+│                                                               │
+│  Main Thread                      Main Thread                │
+│  ┌──────────────────┐            ┌──────────────────┐       │
+│  │ fetch(pluginUrl) │            │ import { Plugin }│       │
+│  │      ↓           │            │   from 'pkg'     │       │
+│  │ Blob Worker      │            │      ↓           │       │
+│  │      ↓           │            │ ComponentRenderer│       │
+│  │ RPC Connection   │            └──────────────────┘       │
+│  └──────────────────┘                                        │
+│         ↕ RPC                                                │
+│  Self-Contained Plugin Worker                                │
+│  ┌────────────────────────────┐                             │
+│  │ • kkRPC (bundled)          │                             │
+│  │ • React (bundled)          │                             │
+│  │ • API Components (bundled) │                             │
+│  │ • Plugin Code              │                             │
+│  │ • RPC Setup & Init         │                             │
+│  └────────────────────────────┘                             │
+│                                                               │
+│  • Sandboxed & Isolated        • Fast & Simple              │
+│  • Load from any URL           • Shared code reuse          │
+│  • Production-ready            • Development-friendly        │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Component Flow
+### Plugin Flow
 
+**Worker Mode (External Loading):**
 ```
+HTTP Server (localhost:3000)
+      ↓
+fetch(pluginUrl) - Main Thread
+      ↓
+Blob Worker Creation
+      ↓
+Self-Contained Plugin Worker:
+  ├─ React Plugin (TSX)
+  ├─ Custom Reconciler
+  ├─ Component Tree (Virtual)
+  └─ Serialize + RPC
+      ↓
+Main Thread - ComponentRenderer
+      ↓
+Svelte Components (UI Layer)
+      ↓
+shadcn-svelte (Beautiful UI)
+```
+
+**Main Thread Mode (Direct Import):**
+```
+import { Plugin } from 'package'
+      ↓
 React Plugin (TSX)
       ↓
 Custom Reconciler
       ↓
 Component Tree (Virtual)
       ↓
-[Worker Mode: Serialize + RPC] or [Main Thread: Direct]
+ComponentRenderer (Direct)
       ↓
 Svelte Components (UI Layer)
       ↓
@@ -65,19 +101,24 @@ shadcn-svelte (Beautiful UI)
 # Install dependencies
 pnpm install
 
-# Start development server
-pnpm dev
+# Build plugins (in one terminal)
+cd packages/plugin-example
+pnpm dev  # Builds plugins and serves on http://localhost:3000
 
-# Build for production
-pnpm build
+# Start demo app (in another terminal)
+cd packages/demo-sveltekit
+pnpm dev  # Starts on http://localhost:5173
 ```
 
 ### Usage
 
 Open http://localhost:5173 and you'll see:
-- **Runtime Mode Toggle**: Switch between Web Worker and Main Thread
+- **Runtime Mode Toggle**: Switch between ⚡ Web Worker and 🧵 Main Thread
 - **Demo Selector**: Choose Simple Demo or Advanced Demo
-- **Live Interaction**: All components work in both modes
+- **Live Interaction**: All components work seamlessly in both modes
+
+**Worker Mode** loads plugins from `http://localhost:3000/` as external bundles.  
+**Main Thread Mode** imports plugins directly from the package for faster development.
 
 ## Project Structure
 
@@ -99,32 +140,46 @@ svelte-react-render/
 │   │   │       └── types.ts
 │   │   └── dist/                 # Built package
 │   │
-│   └── app/                      # Svelte host application
+│   ├── plugin-example/           # Example plugins (@svelte-react-render/plugin-example)
+│   │   ├── src/
+│   │   │   ├── simple-demo.tsx           # Simple demo component
+│   │   │   ├── simple-demo.worker.ts     # Self-contained worker
+│   │   │   ├── advanced-demo.tsx         # Advanced demo component
+│   │   │   ├── advanced-demo.worker.ts   # Self-contained worker
+│   │   │   ├── serialization-utils.ts    # Tree serialization
+│   │   │   ├── handler-registry.ts       # Event handlers
+│   │   │   ├── worker-rpc-types.ts       # RPC interfaces
+│   │   │   └── index.ts                  # Exports for main-thread
+│   │   ├── dist/                 # Built worker bundles
+│   │   │   ├── simple-demo.js    # Served at localhost:3000
+│   │   │   └── advanced-demo.js  # Served at localhost:3000
+│   │   └── build.ts              # Build system with dev server
+│   │
+│   └── demo-sveltekit/           # Svelte host application
 │       ├── src/
-│       │   ├── plugin/           # Plugin infrastructure
-│       │   │   ├── PluginHost.svelte          # Main thread host
-│       │   │   ├── WorkerPluginHost.svelte    # Worker host
-│       │   │   ├── ComponentRenderer.svelte    # UI renderer
-│       │   │   ├── react-plugin.worker.ts     # Worker runtime
-│       │   │   ├── worker-rpc-types.ts        # RPC interfaces
-│       │   │   ├── serialization.ts           # Tree serialization
-│       │   │   └── handler-registry.ts        # Event handlers
+│       │   ├── lib/
+│       │   │   ├── plugin/       # Plugin infrastructure
+│       │   │   │   ├── PluginHost.svelte          # Main thread host
+│       │   │   │   ├── WorkerPluginHost.svelte    # Blob worker host
+│       │   │   │   ├── ComponentRenderer.svelte   # UI renderer
+│       │   │   │   ├── worker-rpc-types.ts        # RPC interfaces
+│       │   │   │   └── serialization.ts           # Tree serialization
+│       │   │   │
+│       │   │   └── components/ui/ # shadcn-svelte components
+│       │   │       ├── button/
+│       │   │       ├── input/
+│       │   │       ├── form/
+│       │   │       ├── switch/
+│       │   │       └── toggle/
 │       │   │
-│       │   ├── plugins/          # Demo plugins
-│       │   │   ├── simple-demo.tsx
-│       │   │   └── advanced-demo.tsx
-│       │   │
-│       │   └── components/ui/    # Svelte UI components
-│       │       ├── Button.svelte
-│       │       ├── Input.svelte
-│       │       ├── Form.svelte
-│       │       ├── Switch.svelte
-│       │       └── Toggle.svelte
+│       │   └── routes/
+│       │       └── +page.svelte   # Main demo page
 │       │
-│       └── App.svelte            # Main application
+│       └── static/
 │
 ├── .journal/                     # Development journal
-│   └── 2025-10-24.md
+│   ├── 2025-10-24.md
+│   └── 2025-10-25.md
 │
 └── Documentation
     ├── WORKER_ARCHITECTURE.md    # Technical architecture
@@ -134,10 +189,14 @@ svelte-react-render/
 
 ## Creating Plugins
 
-### Basic Example
+Plugins can be created as standalone packages. Each plugin consists of:
+1. **React Component** - Your plugin logic
+2. **Worker Script** - Self-contained worker bundle
+
+### Plugin Component Example
 
 ```tsx
-// my-plugin.tsx
+// src/my-plugin.tsx
 import { useState } from 'react';
 import { Button, Input } from '@svelte-react-render/api';
 
@@ -168,6 +227,35 @@ export default function MyPlugin() {
   );
 }
 ```
+
+### Worker Script Template
+
+```tsx
+// src/my-plugin.worker.ts
+import { RPCChannel, WorkerChildIO } from 'kkrpc';
+import * as React from 'react';
+import * as API from '@svelte-react-render/api';
+import { serializeComponentTree, createSerializationContext } from './serialization-utils';
+import type { WorkerAPI, MainThreadAPI } from './worker-rpc-types';
+import MyPlugin from './my-plugin';
+
+// ... standard worker setup (see plugin-example for full template)
+```
+
+### Build Configuration
+
+```typescript
+// build.ts
+await Bun.build({
+  entrypoints: ['./src/my-plugin.worker.ts'],
+  outdir: './dist',
+  target: 'browser',
+  format: 'esm',
+  external: [], // Bundle everything!
+});
+```
+
+See `packages/plugin-example/` for a complete working example.
 
 ### Available Components
 
@@ -257,35 +345,72 @@ export default function AdvancedPlugin() {
 
 ## Runtime Modes
 
-### Web Worker Mode (Default)
+### Web Worker Mode (External Loading)
 
 **Use When:**
 - Running untrusted plugin code
 - Need isolation from main thread
 - Security is critical
 - Building a plugin marketplace
+- Loading plugins from URLs
 
 **Characteristics:**
 - Sandboxed execution
-- Async RPC communication
-- ~5-10ms event handling latency
-- Separate worker bundle
+- Self-contained worker bundles
+- Load from any URL (localhost, CDN, etc.)
+- Async RPC communication (~5-10ms latency)
+- Production-ready architecture
+- No dependency coordination needed
 
-### Main Thread Mode
+**How It Works:**
+1. Fetch plugin script from URL
+2. Create blob worker from script
+3. Worker auto-initializes with bundled dependencies
+4. RPC channel for communication
+
+### Main Thread Mode (Direct Import)
 
 **Use When:**
 - Performance is critical
 - Trusted plugin code
 - Rapid prototyping
 - Debugging plugins
+- Development workflow
 
 **Characteristics:**
 - Direct execution
+- Import from workspace packages
 - <1ms event handling
 - Simpler debugging
 - No serialization overhead
+- Shared React instances
+
+**How It Works:**
+1. Import plugin component directly
+2. Render with custom reconciler
+3. Direct function calls (no RPC)
 
 ## How It Works
+
+### Self-Contained Plugin Architecture
+
+Each plugin is a **complete, standalone ES module**:
+
+```typescript
+// Plugin bundle includes:
+- kkRPC library         → RPC communication
+- React runtime         → Hook & component support
+- API components        → UI primitives
+- Plugin code           → Your logic
+- Worker setup          → Auto-initialization
+```
+
+**Benefits:**
+- ✅ No dependency coordination
+- ✅ No version conflicts
+- ✅ Load from any URL
+- ✅ Simple deployment
+- ✅ Production-ready
 
 ### Custom React Reconciler
 
@@ -296,16 +421,16 @@ The heart of the system is a custom React reconciler that:
 3. **Maps to Svelte components** - Translates React components to Svelte
 4. **Handles state updates** - Syncs React state changes to UI
 
-### Event Handler Serialization
+### Event Handler Serialization (Worker Mode)
 
-In Worker mode, functions can't be serialized. The solution:
+Functions can't cross worker boundaries. The solution:
 
 ```typescript
-// Worker: Generate handler IDs
+// Worker: Register handler and generate ID
 const handlerId = registerHandler(onClick);
 props._onClickHandlerId = handlerId;
 
-// Main thread: Create proxy function
+// Main thread: Create proxy that calls back to worker
 onClick: async () => {
   await rpc.getAPI().executeHandler(handlerId);
 }
@@ -316,7 +441,7 @@ onClick: async () => {
 ```typescript
 // Worker API (exposed to main thread)
 interface WorkerAPI {
-  renderPlugin(pluginUrl: string, props?: any): Promise<void>;
+  initialize(props?: any): Promise<void>;
   updateProps(props: any): Promise<void>;
   executeHandler(handlerId: string, ...args: any[]): Promise<void>;
   destroy(): Promise<void>;
@@ -327,6 +452,20 @@ interface MainThreadAPI {
   updateComponentTree(tree: SerializedComponentTree): void;
   logMessage(level: string, ...args: any[]): void;
 }
+```
+
+### Blob Worker Loading
+
+```typescript
+// Fetch plugin from URL
+const response = await fetch('http://localhost:3000/plugin.js');
+const scriptText = await response.text();
+
+// Create worker from blob
+const blob = new Blob([scriptText], { type: 'application/javascript' });
+const worker = new Worker(URL.createObjectURL(blob));
+
+// Worker auto-initializes and connects via RPC
 ```
 
 ## Performance

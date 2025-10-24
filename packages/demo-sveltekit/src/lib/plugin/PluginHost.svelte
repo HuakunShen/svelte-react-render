@@ -22,14 +22,9 @@
 
     // Subscribe to bridge updates
     unsubscribe = newBridge.subscribe(() => {
-      console.log('PluginHost: Bridge update triggered', {
-        rootInstance: newBridge.rootInstance,
-        rootInstanceId: newBridge.rootInstance?.id,
-        rootInstanceType: newBridge.rootInstance?.type
-      });
+      console.log('PluginHost: Bridge update triggered');
       // Direct assignment triggers Svelte reactivity
       rootInstance = newBridge.rootInstance;
-      console.log('PluginHost: rootInstance updated');
     });
 
     // Render the plugin immediately after setting up the subscription
@@ -61,3 +56,4 @@
     </div>
   {/if}
 </div>
+

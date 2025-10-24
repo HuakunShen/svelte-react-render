@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { RPCChannel, WorkerParentIO } from 'kkrpc';
-  import ReactPluginWorker from './react-plugin.worker.ts?worker';
   import ComponentRenderer from './ComponentRenderer.svelte';
   import type { WorkerAPI, MainThreadAPI, SerializedComponentTree } from './worker-rpc-types';
 
@@ -23,12 +22,40 @@
 
   let lastPluginUrl = $state<string | null>(null);
 
-  onMount(async () => {
+  async function loadPlugin(url: string) {
     try {
-      console.log('[Main] Creating worker for plugin:', pluginUrl);
+      console.log('[Main] Fetching plugin from:', url);
+      isLoading = true;
+      error = null;
       
-      // Create worker
-      worker = new ReactPluginWorker();
+      // Fetch the plugin script
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch plugin: ${response.status} ${response.statusText}`);
+      }
+      
+      const scriptText = await response.text();
+      console.log('[Main] Plugin script fetched, creating blob worker');
+      
+      // Create a blob worker from the script
+      const blob = new Blob([scriptText], { type: 'application/javascript' });
+      const blobURL = URL.createObjectURL(blob);
+      
+      // Terminate old worker if exists
+      if (worker) {
+        console.log('[Main] Terminating old worker');
+        worker.terminate();
+        worker = null;
+        rpc = null;
+      }
+      
+      // Create worker from blob
+      worker = new Worker(blobURL);
+      console.log('[Main] Worker created');
+      
+      // Clean up blob URL after worker is created
+      URL.revokeObjectURL(blobURL);
+      
       const io = new WorkerParentIO(worker);
       
       // Create RPC channel
@@ -46,35 +73,27 @@
       });
 
       rpcContext.rpc = rpc;
-
-      // Render the plugin in the worker
-      const api = rpc.getAPI();
-      await api.renderPlugin(pluginUrl, pluginProps);
-      lastPluginUrl = pluginUrl;
+      lastPluginUrl = url;
       
-      console.log('[Main] Plugin render initiated');
+      console.log('[Main] Plugin worker initialized');
     } catch (err) {
-      console.error('[Main] Error initializing worker:', err);
+      console.error('[Main] Error loading plugin:', err);
       error = err instanceof Error ? err.message : String(err);
       isLoading = false;
     }
+  }
+
+  onMount(() => {
+    loadPlugin(pluginUrl);
   });
 
-  // Watch for plugin URL changes and re-render
+  // Watch for plugin URL changes and reload
   $effect(() => {
-    // Only trigger if URL actually changed and we have an RPC connection
-    if (rpc && pluginUrl !== lastPluginUrl && lastPluginUrl !== null) {
-      console.log('[Main] Plugin URL changed, re-rendering:', pluginUrl);
-      isLoading = true;
+    // Only trigger if URL actually changed
+    if (pluginUrl !== lastPluginUrl && lastPluginUrl !== null) {
+      console.log('[Main] Plugin URL changed, reloading:', pluginUrl);
       rootInstance = null;
-      lastPluginUrl = pluginUrl;
-      
-      const api = rpc.getAPI();
-      api.renderPlugin(pluginUrl, pluginProps).catch(err => {
-        console.error('[Main] Error re-rendering plugin:', err);
-        error = err instanceof Error ? err.message : String(err);
-        isLoading = false;
-      });
+      loadPlugin(pluginUrl);
     }
   });
 
@@ -125,4 +144,3 @@
     </div>
   {/if}
 </div>
-

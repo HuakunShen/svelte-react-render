@@ -2,10 +2,14 @@
 
 ## Overview
 
-The plugin system now supports **two runtime modes** that can be switched dynamically:
+The plugin system supports **two runtime modes** that can be switched dynamically:
 
-1. **Web Worker Mode** - React runs in isolated Web Worker (sandboxed)
-2. **Main Thread Mode** - React runs directly in main thread (traditional)
+1. **Web Worker Mode** - Self-contained plugins loaded from URLs (production-ready)
+2. **Main Thread Mode** - Direct plugin imports from packages (development-friendly)
+
+### What Changed (Oct 2025)
+
+The architecture was redesigned to use **self-contained plugin workers**. Each plugin is now a complete, standalone ES module that bundles everything (React, kkRPC, API) and handles its own initialization.
 
 ## Features
 
@@ -24,84 +28,134 @@ Both modes support dynamic plugin switching:
 
 ## Architecture Comparison
 
-### Web Worker Mode
+### Web Worker Mode (External Loading)
 ```
-Main Thread                    Worker Thread
------------                    -------------
-WorkerPluginHost.svelte   <->  react-plugin.worker.ts
-ComponentRenderer.svelte  <-   Serialized Tree
-RPC Event Callbacks       ->   React Event Handlers
+Main Thread                           Self-Contained Plugin Worker
+-----------                           ----------------------------
+fetch(http://localhost:3000/plugin.js)  
+      ↓                                
+Blob Worker Creation                  [Complete Bundle]
+      ↓                               - kkRPC
+WorkerPluginHost.svelte    <-RPC->   - React
+ComponentRenderer.svelte   <------   - API Components
+                                      - Plugin Code
+                                      - Serialization Utils
+                                      - Auto-initialization
 ```
 
 **Pros:**
-- Sandboxed execution (security)
-- Isolated from main thread crashes
-- Can be terminated independently
+- ✅ Sandboxed execution (security)
+- ✅ Isolated from main thread
+- ✅ Load from any URL (localhost, CDN, remote)
+- ✅ No dependency coordination
+- ✅ Production-ready
+- ✅ Can be terminated independently
+- ✅ Truly external plugins
 
 **Cons:**
 - Serialization overhead
-- Async RPC latency for events
-- Larger bundle (includes worker code)
+- Async RPC latency (~5-10ms)
+- Larger individual bundle sizes (but acceptable)
 
-### Main Thread Mode
+### Main Thread Mode (Direct Import)
 ```
 Main Thread
 -----------
+import { Plugin } from '@svelte-react-render/plugin-example'
+      ↓
 PluginHost.svelte
+      ↓
 ComponentRenderer.svelte
+      ↓
 React (direct)
 ```
 
 **Pros:**
-- No serialization overhead
-- Direct function calls (faster)
-- Simpler debugging
-- Smaller bundle size
+- ✅ No serialization overhead
+- ✅ Direct function calls (<1ms)
+- ✅ Simpler debugging
+- ✅ Fast development workflow
+- ✅ Shared React instances
+- ✅ Code reuse via workspace packages
 
 **Cons:**
 - No sandboxing
 - Plugin errors can crash main thread
 - Shares memory space with host app
+- Only for trusted plugins
 
 ## Implementation Details
 
-### Worker Mode Fix
+### Self-Contained Plugin Workers
 
-The initial implementation had a bug where switching plugins didn't trigger a re-render. Fixed by:
+Each plugin is built as a complete worker script:
 
+**Plugin Structure:**
+```
+plugin-example/
+├── src/
+│   ├── simple-demo.tsx           # React component
+│   ├── simple-demo.worker.ts     # Complete worker bundle
+│   ├── serialization-utils.ts    # Tree serialization
+│   └── worker-rpc-types.ts       # RPC interfaces
+└── dist/
+    └── simple-demo.js            # ~500KB bundled ES module
+```
+
+**Worker Loading:**
 ```typescript
-// Watch for plugin URL changes and re-render
-$effect(() => {
-  if (rpc && !isLoading) {
-    console.log('[Main] Plugin URL changed, re-rendering:', pluginUrl);
-    isLoading = true;
-    rootInstance = null;
-    const api = rpc.getAPI();
-    api.renderPlugin(pluginUrl, pluginProps).catch(err => {
-      console.error('[Main] Error re-rendering plugin:', err);
-      error = err instanceof Error ? err.message : String(err);
-      isLoading = false;
-    });
-  }
-});
+// Fetch plugin from URL
+const response = await fetch(pluginUrl);
+const scriptText = await response.text();
+
+// Create blob worker
+const blob = new Blob([scriptText], { type: 'application/javascript' });
+const blobURL = URL.createObjectURL(blob);
+const worker = new Worker(blobURL);
+
+// Worker auto-initializes and establishes RPC connection
+URL.revokeObjectURL(blobURL); // Clean up
+```
+
+**Auto-Initialization Pattern:**
+```typescript
+// Worker script (simplified)
+async function initializePlugin(props?: any) {
+  // Create renderer, bridge, subscribe to updates
+  // Render React component
+}
+
+function setupRPC() {
+  rpcChannel = new RPCChannel(io, {
+    expose: {
+      async initialize(props) { return initializePlugin(props); },
+      // ... other methods
+    }
+  });
+}
+
+// Setup then auto-initialize
+setupRPC();
+initializePlugin();
 ```
 
 ### Mode Switching
 
-App.svelte now maintains both execution paths:
+The main page maintains both execution paths:
 
 ```typescript
 // State
 let runtimeMode: RuntimeMode = $state('worker');
 
-// Worker mode data
+// Worker mode: Load from external URL
 let pluginUrl = $derived(
   currentDemo === 'simple' 
-    ? '/src/plugins/simple-demo.tsx'
-    : '/src/plugins/advanced-demo.tsx'
+    ? 'http://localhost:3000/simple-demo.js'
+    : 'http://localhost:3000/advanced-demo.js'
 );
 
-// Main thread mode data
+// Main thread mode: Import from package
+import { SimpleDemo, AdvancedDemo } from '@svelte-react-render/plugin-example';
 let pluginElement = $derived(
   createElement(currentDemo === 'simple' ? SimpleDemo : AdvancedDemo)
 );
@@ -109,14 +163,14 @@ let pluginElement = $derived(
 // Conditional rendering
 {#if runtimeMode === 'worker'}
   {#key pluginUrl}
-    <WorkerPluginHost {pluginUrl} />
+    <WorkerPluginHost {pluginUrl} />  <!-- Fetch + Blob Worker -->
   {/key}
 {:else}
-  <PluginHost plugin={pluginElement} />
+  <PluginHost plugin={pluginElement} />  <!-- Direct Render -->
 {/if}
 ```
 
-The `{#key}` block ensures WorkerPluginHost is recreated when pluginUrl changes, forcing a clean re-initialization.
+The `{#key}` block ensures WorkerPluginHost is recreated when pluginUrl changes.
 
 ## Usage
 
@@ -177,18 +231,34 @@ http://localhost:5173
 - Debugging plugins
 - Legacy compatibility
 
-## Files Modified
+## Key Files
 
-- `packages/app/src/App.svelte` - Added mode toggle and dual rendering
-- `packages/app/src/plugin/WorkerPluginHost.svelte` - Fixed plugin URL watching
+**Plugin Package:**
+- `packages/plugin-example/src/*.worker.ts` - Self-contained worker scripts
+- `packages/plugin-example/build.ts` - Builds and serves plugins
+- `packages/plugin-example/dist/*.js` - Bundled plugins (~500KB each)
 
-## Bundle Size Impact
+**Host Application:**
+- `packages/demo-sveltekit/src/routes/+page.svelte` - Dual-mode UI
+- `packages/demo-sveltekit/src/lib/plugin/WorkerPluginHost.svelte` - Blob worker host
+- `packages/demo-sveltekit/src/lib/plugin/PluginHost.svelte` - Main-thread host
 
-- **Worker Mode Only**: 136KB main + 126KB worker = 262KB total
-- **Main Thread Only**: 234KB main
-- **Both Modes**: 253KB main + 126KB worker = 379KB total
+## Bundle Size
 
-The dual-mode setup adds ~145KB to the total bundle size but provides flexibility.
+**Per Plugin Worker Bundle:**
+- Simple Demo: ~450KB (React + kkRPC + API + Plugin)
+- Advanced Demo: ~500KB (includes form components)
+
+**Host Application:**
+- Main bundle: ~250KB (without plugins)
+- Worker mode: Loads external plugins dynamically
+- Main-thread mode: Shares React with host (~0KB overhead)
+
+**Trade-offs:**
+- Larger plugin bundles BUT simpler architecture
+- No dependency coordination
+- Load only what you need
+- Production-ready distribution
 
 ## Future Optimizations
 

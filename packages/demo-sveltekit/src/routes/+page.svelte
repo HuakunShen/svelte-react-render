@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { createElement } from "react";
+  import { createElement } from 'react';
   import WorkerPluginHost from "$lib/plugin/WorkerPluginHost.svelte";
   import PluginHost from "$lib/plugin/PluginHost.svelte";
-  import SimpleDemo from "$lib/plugins/simple-demo";
-  import AdvancedDemo from "$lib/plugins/advanced-demo";
+  import { SimpleDemo, AdvancedDemo } from '@svelte-react-render/plugin-example';
 
   type DemoType = 'simple' | 'advanced';
   type RuntimeMode = 'worker' | 'main-thread';
@@ -11,15 +10,14 @@
   let currentDemo: DemoType = $state('simple');
   let runtimeMode: RuntimeMode = $state('worker');
 
-  // For worker mode: use plugin URLs
-  // Simple demo still uses source (dev mode), advanced uses bundled plugin
+  // For worker mode: plugin URLs from external server
   let pluginUrl = $derived(
     currentDemo === 'simple'
-      ? '/src/lib/plugins/simple-demo.tsx'
-      : '/src/lib/plugins-dist/advanced-demo.js'  // Bundled plugin from separate package
+      ? 'http://localhost:3000/simple-demo.js'
+      : 'http://localhost:3000/advanced-demo.js'
   );
 
-  // For main thread mode: create React element
+  // For main-thread mode: create React element
   let pluginElement = $derived(
     createElement(currentDemo === 'simple' ? SimpleDemo : AdvancedDemo)
   );
@@ -33,7 +31,7 @@
           Svelte-React Render Demo
         </h1>
         <p class="text-lg text-muted-foreground">
-          React plugin rendered with beautiful shadcn-svelte components
+          React plugins loaded from external servers, rendered with beautiful shadcn-svelte components
         </p>
       </div>
 
@@ -41,7 +39,7 @@
         <div class="p-6">
           <div class="space-y-6">
             <!-- Runtime Mode Toggle -->
-            <div class="flex gap-2 items-center justify-between mb-4">
+            <div class="flex gap-2 items-center justify-between">
               <div class="text-sm font-medium text-muted-foreground">Runtime Mode:</div>
               <div class="flex gap-1 p-1 bg-muted rounded-lg">
                 <button
@@ -81,7 +79,7 @@
               <div class="h-3 w-3 rounded-full bg-yellow-500"></div>
               <div class="h-3 w-3 rounded-full bg-green-500"></div>
               <span class="ml-4 text-sm text-muted-foreground font-mono">
-                {currentDemo === 'simple' ? 'simple-demo.tsx' : 'advanced-demo.js (bundled)'}
+                {runtimeMode === 'worker' ? pluginUrl : `${currentDemo}-demo.tsx (local)`}
               </span>
             </div>
 
@@ -106,7 +104,7 @@
         </p>
         {#if runtimeMode === 'worker'}
           <p class="text-xs text-blue-500 dark:text-blue-400">
-            ⚡ React plugin running in Web Worker (sandboxed)
+            ⚡ React plugin running in Web Worker (loaded from external server)
           </p>
         {:else}
           <p class="text-xs text-green-500 dark:text-green-400">
