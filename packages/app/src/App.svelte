@@ -2,14 +2,25 @@
   import { ModeWatcher } from "mode-watcher";
   import "./app.css";
   import { createElement } from "react";
+  import WorkerPluginHost from "./plugin/WorkerPluginHost.svelte";
   import PluginHost from "./plugin/PluginHost.svelte";
   import SimpleDemo from "./plugins/simple-demo";
   import AdvancedDemo from "./plugins/advanced-demo";
 
   type DemoType = 'simple' | 'advanced';
+  type RuntimeMode = 'worker' | 'main-thread';
 
   let currentDemo: DemoType = $state('simple');
+  let runtimeMode: RuntimeMode = $state('worker');
 
+  // For worker mode: use plugin URLs
+  let pluginUrl = $derived(
+    currentDemo === 'simple' 
+      ? '/src/plugins/simple-demo.tsx'
+      : '/src/plugins/advanced-demo.tsx'
+  );
+
+  // For main thread mode: create React element
   let pluginElement = $derived(
     createElement(currentDemo === 'simple' ? SimpleDemo : AdvancedDemo)
   );
@@ -31,6 +42,25 @@
       <div class="rounded-lg border bg-card text-card-foreground shadow-sm">
         <div class="p-6">
           <div class="space-y-6">
+            <!-- Runtime Mode Toggle -->
+            <div class="flex gap-2 items-center justify-between mb-4">
+              <div class="text-sm font-medium text-muted-foreground">Runtime Mode:</div>
+              <div class="flex gap-1 p-1 bg-muted rounded-lg">
+                <button
+                  class="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-7 px-2 {runtimeMode === 'worker' ? 'bg-background text-foreground' : 'text-muted-foreground'}"
+                  onclick={() => runtimeMode = 'worker'}
+                >
+                  ⚡ Web Worker
+                </button>
+                <button
+                  class="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-7 px-2 {runtimeMode === 'main-thread' ? 'bg-background text-foreground' : 'text-muted-foreground'}"
+                  onclick={() => runtimeMode = 'main-thread'}
+                >
+                  🧵 Main Thread
+                </button>
+              </div>
+            </div>
+
             <!-- Demo Tabs -->
             <div class="flex gap-1 p-1 bg-muted rounded-lg">
               <button
@@ -57,7 +87,13 @@
               </span>
             </div>
 
-            <PluginHost plugin={pluginElement} />
+            {#if runtimeMode === 'worker'}
+              {#key pluginUrl}
+                <WorkerPluginHost {pluginUrl} />
+              {/key}
+            {:else}
+              <PluginHost plugin={pluginElement} />
+            {/if}
           </div>
         </div>
       </div>
@@ -70,6 +106,15 @@
             : 'Showing: Form, Switch, and Toggle components'
           }
         </p>
+        {#if runtimeMode === 'worker'}
+          <p class="text-xs text-blue-500 dark:text-blue-400">
+            ⚡ React plugin running in Web Worker (sandboxed)
+          </p>
+        {:else}
+          <p class="text-xs text-green-500 dark:text-green-400">
+            🧵 React plugin running in Main Thread (direct)
+          </p>
+        {/if}
       </div>
     </div>
   </div>
