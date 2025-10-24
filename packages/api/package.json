@@ -1,0 +1,30 @@
+{
+	"name": "@svelte-react-render/api",
+	"version": "0.0.0",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch"
+	},
+	"dependencies": {
+		"react": "^18.3.1",
+		"react-reconciler": "^0.29.2"
+	},
+	"devDependencies": {
+		"@types/react": "^18.3.12",
+		"@types/react-reconciler": "^0.28.8",
+		"tsup": "^8.3.5",
+		"typescript": "~5.8.3"
+	},
+	"peerDependencies": {
+		"react": "^18.0.0"
+	}
+}
