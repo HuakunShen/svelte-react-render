@@ -9,17 +9,23 @@
   },
   "scripts": {
     "build": "bun run build.ts",
-    "dev": "bun run build.ts --dev"
+    "dev": "bun run build.ts --dev",
+    "server:simple": "bun run src/simple-demo.server.ts",
+    "server:advanced": "bun run src/advanced-demo.server.ts",
+    "server": "concurrently \"bun run server:simple\" \"bun run server:advanced\""
   },
   "dependencies": {
     "@svelte-react-render/api": "workspace:*",
     "kkrpc": "^0.4.0",
-    "react": "^18.3.1"
+    "react": "^18.3.1",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/react": "^18.3.18",
-    "typescript": "^5",
-    "serve": "^14.2.5"
+    "@types/ws": "^8.18.1",
+    "concurrently": "^9.1.2",
+    "serve": "^14.2.5",
+    "typescript": "^5"
   }
 }

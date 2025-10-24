@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { createElement } from 'react';
 	import WorkerPluginHost from '$lib/plugin/WorkerPluginHost.svelte';
+	import WebSocketPluginHost from '$lib/plugin/WebSocketPluginHost.svelte';
 	import PluginHost from '$lib/plugin/PluginHost.svelte';
 	import { SimpleDemo, AdvancedDemo } from '@svelte-react-render/plugin-example';
 
 	type DemoType = 'simple' | 'advanced';
-	type RuntimeMode = 'worker' | 'main-thread';
+	type RuntimeMode = 'worker' | 'main-thread' | 'node-server';
 
 	let currentDemo: DemoType = $state('simple');
 	let runtimeMode: RuntimeMode = $state('worker');
@@ -15,6 +16,13 @@
 		currentDemo === 'simple'
 			? 'http://localhost:3000/simple-demo.js'
 			: 'http://localhost:3000/advanced-demo.js'
+	);
+
+	// For Node.js server mode: WebSocket URLs
+	let serverUrl = $derived(
+		currentDemo === 'simple'
+			? 'ws://localhost:3001'
+			: 'ws://localhost:3002'
 	);
 
 	// For main-thread mode: create React element
@@ -47,6 +55,15 @@
 									onclick={() => (runtimeMode = 'worker')}
 								>
 									⚡ Web Worker
+								</button>
+								<button
+									class="inline-flex h-7 items-center justify-center gap-1 rounded-md px-2 text-xs font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 {runtimeMode ===
+									'node-server'
+										? 'bg-background text-foreground'
+										: 'text-muted-foreground'}"
+									onclick={() => (runtimeMode = 'node-server')}
+								>
+									🖥️ Node.js
 								</button>
 								<button
 									class="inline-flex h-7 items-center justify-center gap-1 rounded-md px-2 text-xs font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 {runtimeMode ===
@@ -88,13 +105,22 @@
 							<div class="h-3 w-3 rounded-full bg-yellow-500"></div>
 							<div class="h-3 w-3 rounded-full bg-green-500"></div>
 							<span class="ml-4 font-mono text-sm text-muted-foreground">
-								{runtimeMode === 'worker' ? pluginUrl : `${currentDemo}-demo.tsx (local)`}
+								{runtimeMode === 'worker'
+									? pluginUrl
+									: runtimeMode === 'node-server'
+										? serverUrl
+										: `${currentDemo}-demo.tsx (local)`
+								}
 							</span>
 						</div>
 
 						{#if runtimeMode === 'worker'}
 							{#key pluginUrl}
 								<WorkerPluginHost {pluginUrl} />
+							{/key}
+						{:else if runtimeMode === 'node-server'}
+							{#key serverUrl}
+								<WebSocketPluginHost {serverUrl} />
 							{/key}
 						{:else}
 							<PluginHost plugin={pluginElement} />
@@ -113,6 +139,10 @@
 				{#if runtimeMode === 'worker'}
 					<p class="text-xs text-blue-500 dark:text-blue-400">
 						⚡ React plugin running in Web Worker (loaded from external server)
+					</p>
+				{:else if runtimeMode === 'node-server'}
+					<p class="text-xs text-purple-500 dark:text-purple-400">
+						🖥️ React plugin running in Node.js (WebSocket communication)
 					</p>
 				{:else}
 					<p class="text-xs text-green-500 dark:text-green-400">
