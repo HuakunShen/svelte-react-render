@@ -37,6 +37,14 @@
     render(plugin, newBridge);
   });
 
+  // Watch for plugin changes and re-render
+  $effect(() => {
+    if (bridge) {
+      console.log('PluginHost: Plugin changed, re-rendering');
+      render(plugin, bridge);
+    }
+  });
+
   onDestroy(() => {
     if (unsubscribe) {
       unsubscribe();

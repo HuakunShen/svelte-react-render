@@ -70,7 +70,18 @@ export const hostConfig: HostConfig<
     console.log('Reconciler: createInstance', { type, props });
 
     // Allow both our custom components and standard HTML elements
-    const validTypes: ComponentType[] = ['Button', 'Input'];
+    const validTypes: ComponentType[] = [
+      'Button',
+      'Input',
+      'FormField',
+      'FormControl',
+      'FormLabel',
+      'FormDescription',
+      'FormFieldErrors',
+      'FormButton',
+      'Switch',
+      'Toggle'
+    ];
 
     // For standard HTML elements, just pass through
     if (!validTypes.includes(type as ComponentType) && typeof type === 'string') {
