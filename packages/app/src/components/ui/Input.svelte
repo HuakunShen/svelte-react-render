@@ -1,4 +1,7 @@
 <script lang="ts">
+  import Input from '$lib/components/ui/input/input.svelte';
+  import Label from '$lib/components/ui/label/label.svelte';
+
   interface InputProps {
     id?: string;
     value?: string;
@@ -8,6 +11,7 @@
     type?: string;
     onChange?: (value: string, event?: Event) => void;
     onInput?: (value: string, event?: Event) => void;
+    class?: string;
   }
 
   let {
@@ -18,7 +22,8 @@
     label,
     type = 'text',
     onChange,
-    onInput
+    onInput,
+    class: className
   }: InputProps = $props();
 
   let internalValue = $state(value ?? defaultValue ?? '');
@@ -40,17 +45,17 @@
   });
 </script>
 
-<div class="flex flex-col gap-1">
+<div class="grid w-full max-w-sm items-center gap-1.5">
   {#if label}
-    <label for={id} class="text-xs font-medium text-gray-600">{label}</label>
+    <Label for={id}>{label}</Label>
   {/if}
-  <input
+  <Input
     {id}
     {type}
     {placeholder}
     bind:value={internalValue}
     oninput={handleChange}
     onchange={handleChange}
-    class="px-3 py-2 border border-gray-300 rounded text-sm transition-colors focus:outline-none focus:border-blue-500"
+    class={className}
   />
 </div>

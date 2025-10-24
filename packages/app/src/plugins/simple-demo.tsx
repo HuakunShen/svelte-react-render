@@ -19,39 +19,57 @@ export default function SimpleDemo() {
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '400px' }}>
-      <h2 style={{ marginBottom: '20px' }}>Simple Demo</h2>
-
-      <Input
-        label="Your Name"
-        placeholder="Enter your name"
-        value={name}
-        onChange={(value) => setName(value)}
-      />
-
-      <div style={{ marginTop: '16px' }}>
-        <Button
-          title={`Count: ${count}`}
-          onClick={() => setCount(count + 1)}
-        />
+    <div className="p-6 max-w-md mx-auto space-y-6">
+      <div className="space-y-2">
+        <h2 className="text-2xl font-semibold tracking-tight">Simple Demo</h2>
+        <p className="text-sm text-muted-foreground">
+          Try entering your name and clicking the buttons below
+        </p>
       </div>
 
-      <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
-        <Button
-          title="Submit"
-          variant="primary"
-          onClick={handleSubmit}
+      <div className="space-y-4">
+        <Input
+          label="Your Name"
+          placeholder="Enter your name"
+          value={name}
+          onChange={(value) => setName(value)}
         />
 
-        <Button
-          title="Reset"
-          onClick={handleReset}
-        />
+        <div className="space-y-2">
+          <Button
+            title={`Click count: ${count}`}
+            variant="outline"
+            onClick={() => setCount(count + 1)}
+            className="w-full justify-start"
+          />
+        </div>
+
+        <div className="flex gap-2">
+          <Button
+            title="Submit"
+            variant="primary"
+            onClick={handleSubmit}
+            className="flex-1"
+          />
+
+          <Button
+            title="Reset"
+            variant="secondary"
+            onClick={handleReset}
+            className="flex-1"
+          />
+        </div>
       </div>
 
       {showGreeting && (
-        <div style={{ marginTop: '20px', padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '6px' }}>
-          Hello, <strong>{name}</strong>! You clicked the button {count} times.
+        <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary"></div>
+            <p className="text-sm">
+              Hello, <span className="font-semibold">{name}</span>!
+              You clicked the button <span className="font-semibold">{count}</span> {count === 1 ? 'time' : 'times'}.
+            </p>
+          </div>
         </div>
       )}
     </div>

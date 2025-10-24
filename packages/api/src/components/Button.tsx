@@ -5,9 +5,10 @@ export interface ButtonProps {
   children?: ReactNode;
   title?: string;
   icon?: string;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'outline' | 'destructive' | 'ghost' | 'link';
   shortcut?: string;
   onClick?: () => void;
+  className?: string;
 }
 
 export function Button({
@@ -17,6 +18,7 @@ export function Button({
   variant = 'secondary',
   shortcut,
   onClick,
+  className,
 }: ButtonProps): ReactElement {
   return createElement(
     'Button' as any,
@@ -26,6 +28,7 @@ export function Button({
       variant,
       shortcut,
       onClick,
+      className,
     },
     children,
   );
