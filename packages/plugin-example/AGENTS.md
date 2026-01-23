@@ -1,38 +1,38 @@
 # PROJECT KNOWLEDGE BASE: plugin-example
 
-**Type:** Plugin Reference Implementation
+**Type:** Plugin Reference Implementation & Runtime Logic
 
 ## OVERVIEW
-Reference implementation of the plugin system. Contains example React plugins that demonstrate the custom reconciler and support for triple runtime modes (Worker, Node.js, Main Thread).
+Reference implementation for the plugin system. Contains React plugins that demonstrate the custom reconciler and support for **Triple Mode** runtime: Web Worker (sandboxed), Node.js (WebSocket), and Main Thread.
 
 ## STRUCTURE
 ```
 .
 ├── src/
-│   ├── simple-demo.tsx      # Basic React plugin example
-│   ├── advanced-demo.tsx    # Complex React plugin (Forms/State)
+│   ├── *.tsx                # Pure React plugin logic
 │   ├── *.worker.ts          # Web Worker entry points (RPC)
 │   ├── *.server.ts          # Node.js WebSocket entry points
-│   └── shared-plugin-runtime.ts # Core initialization logic
-├── build.ts                 # Custom Bun build script
-└── dist/                    # Bundled output (ESM)
+│   ├── shared-plugin-runtime.ts # Core initialization (95% REUSE)
+│   └── handler-registry.ts  # RPC-safe event management
+├── build.ts                 # Custom Bun build system
+└── dist/                    # Bundled ESM output
 ```
 
 ## WHERE TO LOOK
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| **Plugin Logic** | `src/*.tsx` | Pure React components using `@svelte-react-render/api` |
-| **Worker Bridge** | `src/*.worker.ts` | Sets up kkRPC and renders into the reconciler |
-| **Node.js Bridge** | `src/*.server.ts` | WebSocket server that runs the React plugin |
-| **Shared Runtime** | `src/shared-plugin-runtime.ts` | Maps generic RPC/WS to React render calls |
+| **Shared Logic** | `shared-plugin-runtime.ts` | **95% reuse** between Worker and Server modes. |
+| **Plugin UI** | `src/*.tsx` | React components using `@svelte-react-render/api`. |
+| **RPC Bridge** | `src/*.worker.ts` | Maps kkRPC to React reconciler via shared runtime. |
+| **Node.js Host** | `src/*.server.ts` | WebSocket server executing React in Node runtime. |
 
 ## BUILD NOTES (Bun)
-- **Tooling**: Uses `Bun.build()` instead of Vite for maximum control over bundling.
-- **Self-Contained**: Bundles `react`, `kkrpc`, and `@svelte-react-render/api` into a single file.
-- **Dev Server**: `pnpm dev` starts a static server on port 3000 for worker loading.
-- **Node Server**: `pnpm server` starts WebSocket listeners on ports 3001-3002.
+- **Custom System**: Uses `Bun.build()` (not Vite) for self-contained bundles.
+- **Config**: `minify: false` is hardcoded for easier debugging and inspection.
+- **Output**: Bundles `react`, `kkrpc`, and `api` into a single standalone file.
+- **Dev Server**: `pnpm dev` serves static bundles (3000) and watches for changes.
 
 ## ANTI-PATTERNS
-- **Frontend Dependencies**: NEVER import packages that rely on `window` or `document` in `*.worker.ts` or `*.server.ts`.
-- **Direct DOM**: Plugins must use components from the provided API for UI.
-- **Vite Bundling**: Do not attempt to build this package with Vite; it relies on the custom Bun build logic.
+- **Browser-Only Imports**: NEVER import packages using `window` or `document` (breaks Worker/Server modes).
+- **Direct DOM**: Do not use `document.createElement`; use the Plugin API components.
+- **Vite Bundling**: Package must be built via `build.ts` to ensure correct bundling of RPC logic.

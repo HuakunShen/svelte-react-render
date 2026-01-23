@@ -290,9 +290,18 @@ importers:
 
   packages/demo-vue:
     dependencies:
+      '@svelte-react-render/api':
+        specifier: workspace:*
+        version: link:../api
+      '@svelte-react-render/plugin-example':
+        specifier: workspace:*
+        version: link:../plugin-example
       '@tailwindcss/vite':
         specifier: ^4.1.16
         version: 4.1.16(rolldown-vite@7.3.1(@types/node@22.18.12)(esbuild@0.27.2)(jiti@2.6.1)(yaml@2.8.1))
+      '@types/react':
+        specifier: ^19.2.9
+        version: 19.2.9
       '@vee-validate/zod':
         specifier: ^4.15.1
         version: 4.15.1(vue@3.5.22(typescript@5.9.3))(zod@4.1.12)
@@ -305,9 +314,15 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      kkrpc:
+        specifier: ^0.4.0
+        version: 0.4.0(typescript@5.9.3)
       lucide-vue-next:
         specifier: ^0.548.0
         version: 0.548.0(vue@3.5.22(typescript@5.9.3))
+      react:
+        specifier: ^19.2.3
+        version: 19.2.3
       reka-ui:
         specifier: ^2.6.0
         version: 2.6.0(typescript@5.9.3)(vue@3.5.22(typescript@5.9.3))
@@ -342,6 +357,9 @@ importers:
       '@types/node':
         specifier: ^22.18.12
         version: 22.18.12
+      '@vitejs/plugin-react':
+        specifier: ^5.1.2
+        version: 5.1.2(rolldown-vite@7.3.1(@types/node@22.18.12)(esbuild@0.27.2)(jiti@2.6.1)(yaml@2.8.1))
       '@vitejs/plugin-vue':
         specifier: ^6.0.1
         version: 6.0.1(rolldown-vite@7.3.1(@types/node@22.18.12)(esbuild@0.27.2)(jiti@2.6.1)(yaml@2.8.1))(vue@3.5.22(typescript@5.9.3))
@@ -5977,6 +5995,18 @@ snapshots:
       normalize-url: 8.1.0
       validator: 13.15.15
     optional: true
+
+  '@vitejs/plugin-react@5.1.2(rolldown-vite@7.3.1(@types/node@22.18.12)(esbuild@0.27.2)(jiti@2.6.1)(yaml@2.8.1))':
+    dependencies:
+      '@babel/core': 7.28.5
+      '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.28.5)
+      '@babel/plugin-transform-react-jsx-source': 7.27.1(@babel/core@7.28.5)
+      '@rolldown/pluginutils': 1.0.0-beta.53
+      '@types/babel__core': 7.20.5
+      react-refresh: 0.18.0
+      vite: rolldown-vite@7.3.1(@types/node@22.18.12)(esbuild@0.27.2)(jiti@2.6.1)(yaml@2.8.1)
+    transitivePeerDependencies:
+      - supports-color
 
   '@vitejs/plugin-react@5.1.2(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.8.1))':
     dependencies:
