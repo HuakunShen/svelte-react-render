@@ -23,7 +23,7 @@
     "@vueuse/core": "^14.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "kkrpc": "^0.4.0",
+    "kkrpc": "workspace:*",
     "lucide-vue-next": "^0.548.0",
     "react": "^19.2.3",
     "reka-ui": "^2.6.0",
